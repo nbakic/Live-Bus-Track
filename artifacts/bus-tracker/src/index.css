@@ -95,7 +95,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
   border-radius: 12px !important;
   overflow: hidden;
-  margin-bottom: 80px !important; /* Keep above filter bar */
+  margin-bottom: 88px !important; /* Above filter bar */
   margin-right: 12px !important;
 }
 

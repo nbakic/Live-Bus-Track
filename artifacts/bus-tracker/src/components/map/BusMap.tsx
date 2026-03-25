@@ -1,15 +1,26 @@
 import { useState, useMemo, useCallback, useEffect, Fragment } from "react";
-import { MapContainer, TileLayer, Marker, ZoomControl, Polyline, CircleMarker, useMap } from "react-leaflet";
+import {
+  MapContainer, TileLayer, Marker, ZoomControl,
+  Polyline, CircleMarker, useMap,
+} from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { Loader2, Layers } from "lucide-react";
 import type { Vehicle } from "@workspace/api-client-react";
 import { getStatusColor } from "@/lib/utils";
 import { VehicleDetails } from "./VehicleDetails";
+import { StopInfoPanel } from "./StopInfoPanel";
+import { StopsListModal } from "./StopsListModal";
 import { useRouteData } from "@/hooks/use-route-data";
 
 interface BusMapProps {
   vehicles: Vehicle[];
+}
+
+interface StopPoint {
+  lat: number;
+  lon: number;
+  role: string;
 }
 
 const DEFAULT_CENTER: [number, number] = [43.513, 16.45];
@@ -36,14 +47,13 @@ const TILE_LAYERS: Record<TileMode, { url: string; attribution: string; label: s
 };
 
 const TILE_ORDER: TileMode[] = ["dark", "light", "osm"];
-
 const TILE_ICONS: Record<TileMode, { bg: string; text: string }> = {
-  dark:  { bg: "rgba(20,21,35,0.92)",   text: "#fff" },
+  dark:  { bg: "rgba(20,21,35,0.92)",    text: "#fff" },
   light: { bg: "rgba(255,255,255,0.92)", text: "#333" },
   osm:   { bg: "rgba(240,240,240,0.92)", text: "#333" },
 };
 
-const createClusterCustomIcon = function (cluster: L.MarkerCluster) {
+const createClusterCustomIcon = (cluster: L.MarkerCluster) => {
   const count = cluster.getChildCount();
   return L.divIcon({
     html: `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-weight:700;font-size:13px;color:white;">${count}</div>`,
@@ -60,80 +70,87 @@ function MapPanner({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
-// Route rendered as a thick outlined polyline for maximum visibility
-function RouteLayer({ lineName, color }: { lineName: string; color: string }) {
-  const { data } = useRouteData(lineName);
+// ---- Route Layer ----
+function RouteLayer({
+  data,
+  color,
+  onStopClick,
+  onLineClick,
+}: {
+  data: ReturnType<typeof useRouteData>["data"];
+  color: string;
+  onStopClick: (stop: StopPoint) => void;
+  onLineClick: () => void;
+}) {
   if (!data || data.routes.length === 0) return null;
-
   const isApproximate = data.source === "osrm";
+  const stops = data.stops.filter((s) =>
+    ["stop", "stop_entry_only", "stop_exit_only", "platform"].includes(s.role)
+  );
 
   return (
     <>
       {data.routes.map((segment, i) => (
         <Fragment key={i}>
-          {/* Dark outline underneath for contrast on any map */}
           <Polyline
             positions={segment}
-            pathOptions={{
-              color: "rgba(0,0,0,0.4)",
-              weight: isApproximate ? 11 : 13,
-              opacity: 1,
-              lineCap: "round",
-              lineJoin: "round",
-              dashArray: isApproximate ? "12 8" : undefined,
-            }}
+            pathOptions={{ color: "rgba(0,0,0,0.4)", weight: isApproximate ? 11 : 13, opacity: 1, lineCap: "round", lineJoin: "round", dashArray: isApproximate ? "12 8" : undefined }}
+            eventHandlers={{ click: (e) => { L.DomEvent.stopPropagation(e); onLineClick(); } }}
           />
-          {/* Coloured route on top */}
           <Polyline
             positions={segment}
-            pathOptions={{
-              color,
-              weight: isApproximate ? 6 : 8,
-              opacity: 1,
-              lineCap: "round",
-              lineJoin: "round",
-              dashArray: isApproximate ? "12 8" : undefined,
-            }}
+            pathOptions={{ color, weight: isApproximate ? 6 : 8, opacity: 1, lineCap: "round", lineJoin: "round", dashArray: isApproximate ? "12 8" : undefined }}
+            eventHandlers={{ click: (e) => { L.DomEvent.stopPropagation(e); onLineClick(); } }}
           />
         </Fragment>
       ))}
 
-      {/* Stops as white-outlined circles */}
-      {data.stops
-        .filter((s) => ["stop", "stop_entry_only", "stop_exit_only", "platform"].includes(s.role))
-        .map((stop, i) => (
-          <CircleMarker
-            key={i}
-            center={[stop.lat, stop.lon]}
-            radius={isApproximate ? 5 : 6}
-            pathOptions={{
-              color: "white",
-              fillColor: color,
-              fillOpacity: 1,
-              weight: 2.5,
-            }}
-          />
-        ))}
+      {stops.map((stop, i) => (
+        <CircleMarker
+          key={i}
+          center={[stop.lat, stop.lon]}
+          radius={isApproximate ? 5 : 7}
+          pathOptions={{ color: "white", fillColor: color, fillOpacity: 1, weight: 2.5 }}
+          eventHandlers={{
+            click: (e) => { L.DomEvent.stopPropagation(e); onStopClick(stop); },
+          }}
+        />
+      ))}
     </>
   );
 }
 
+// ---- Main Map ----
 export function BusMap({ vehicles }: BusMapProps) {
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
-  const [tileMode, setTileMode] = useState<TileMode>("dark");
+  const [tileMode, setTileMode] = useState<TileMode>("osm");
   const [showTilePicker, setShowTilePicker] = useState(false);
+  const [clickedStop, setClickedStop] = useState<StopPoint | null>(null);
+  const [showStopsList, setShowStopsList] = useState(false);
 
   const selectedVehicle = useMemo(
     () => vehicles.find((v) => v.id === selectedVehicleId) || null,
     [vehicles, selectedVehicleId]
   );
 
-  const handleClose = useCallback(() => setSelectedVehicleId(null), []);
+  const handleCloseVehicle = useCallback(() => setSelectedVehicleId(null), []);
 
-  const { isLoading: isRouteLoading, data: routeData } = useRouteData(selectedVehicle?.name ?? null);
+  const { isLoading: isRouteLoading, data: routeData } = useRouteData(
+    selectedVehicle?.name ?? null
+  );
+
+  const lineColor = selectedVehicle ? getStatusColor(selectedVehicle.vehicleStatus) : "#6366f1";
 
   const tile = TILE_LAYERS[tileMode];
   const tileIcon = TILE_ICONS[tileMode];
+
+  // Close stop info / stops list on vehicle deselect
+  useEffect(() => {
+    if (!selectedVehicle) {
+      setClickedStop(null);
+      setShowStopsList(false);
+    }
+  }, [selectedVehicle]);
 
   const markers = useMemo(() => {
     return vehicles.map((vehicle) => {
@@ -141,18 +158,16 @@ export function BusMap({ vehicles }: BusMapProps) {
       const isSameLine = !!(selectedVehicle && vehicle.name === selectedVehicle.name);
       const color = getStatusColor(vehicle.vehicleStatus);
 
-      // Dimmed but still readable when another line is focused
       const opacity = selectedVehicle && !isSameLine ? 0.55 : 1;
       const size = isSelected ? 46 : isSameLine ? 42 : 38;
       const fontSize = vehicle.name.length > 2 ? "11" : "14";
-      const borderColor = "white";
       const shadow = isSelected
         ? `0 3px 12px rgba(0,0,0,0.6), 0 0 0 3px rgba(255,255,255,0.4), 0 0 16px ${color}88`
         : `0 3px 10px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.15)`;
 
       const html = `
         <div style="opacity:${opacity};transition:opacity 0.2s ease;width:${size}px;height:${size}px;position:relative;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
-          <div style="position:absolute;inset:0;border-radius:50%;background:${color};border:3px solid ${borderColor};box-shadow:${shadow};"></div>
+          <div style="position:absolute;inset:0;border-radius:50%;background:${color};border:3px solid white;box-shadow:${shadow};"></div>
           <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:${fontSize}px;font-family:system-ui,sans-serif;letter-spacing:-0.5px;text-shadow:0 1px 4px rgba(0,0,0,0.8);">${vehicle.name}</span>
         </div>
       `;
@@ -170,13 +185,29 @@ export function BusMap({ vehicles }: BusMapProps) {
           position={[vehicle.latitude, vehicle.longitude]}
           icon={icon}
           eventHandlers={{
-            click: () => setSelectedVehicleId((prev) => (prev === vehicle.id ? null : vehicle.id)),
+            click: () => {
+              setClickedStop(null);
+              setShowStopsList(false);
+              setSelectedVehicleId((prev) => (prev === vehicle.id ? null : vehicle.id));
+            },
           }}
           zIndexOffset={isSelected ? 2000 : isSameLine ? 1000 : 0}
         />
       );
     });
   }, [vehicles, selectedVehicleId, selectedVehicle]);
+
+  const handleStopClick = useCallback((stop: StopPoint) => {
+    setClickedStop(stop);
+    setShowStopsList(false);
+  }, []);
+
+  const handleLineClick = useCallback(() => {
+    setShowStopsList(true);
+    setClickedStop(null);
+  }, []);
+
+  const anyPanelOpen = !!(clickedStop || showStopsList);
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden z-0">
@@ -186,19 +217,16 @@ export function BusMap({ vehicles }: BusMapProps) {
         zoomControl={false}
         className="w-full h-full z-0"
       >
-        <TileLayer
-          key={tileMode}
-          attribution={tile.attribution}
-          url={tile.url}
-          maxZoom={19}
-        />
+        <TileLayer key={tileMode} attribution={tile.attribution} url={tile.url} maxZoom={19} />
 
         <ZoomControl position="bottomright" />
 
-        {selectedVehicle && (
+        {selectedVehicle && routeData && (
           <RouteLayer
-            lineName={selectedVehicle.name}
-            color={getStatusColor(selectedVehicle.vehicleStatus)}
+            data={routeData}
+            color={lineColor}
+            onStopClick={handleStopClick}
+            onLineClick={handleLineClick}
           />
         )}
 
@@ -217,7 +245,7 @@ export function BusMap({ vehicles }: BusMapProps) {
         )}
       </MapContainer>
 
-      {/* Layer picker — above zoom controls */}
+      {/* Layer picker */}
       <div className="absolute bottom-[185px] right-3 z-[1000] flex flex-col items-end gap-1.5">
         {showTilePicker && (
           <div className="flex flex-col gap-1.5 items-end">
@@ -241,7 +269,6 @@ export function BusMap({ vehicles }: BusMapProps) {
             ))}
           </div>
         )}
-
         <button
           onClick={() => setShowTilePicker((v) => !v)}
           className="w-10 h-10 flex items-center justify-center rounded-lg shadow-lg border transition-all hover:scale-105 active:scale-95"
@@ -252,8 +279,8 @@ export function BusMap({ vehicles }: BusMapProps) {
         </button>
       </div>
 
-      {/* Route status pill */}
-      {selectedVehicle && (isRouteLoading || (routeData && routeData.source !== "none")) && (
+      {/* Route loading indicator */}
+      {selectedVehicle && (isRouteLoading || (routeData && routeData.source !== "none")) && !anyPanelOpen && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1100] bg-black/70 backdrop-blur-md border border-white/15 rounded-full px-3 py-1.5 flex items-center gap-2 text-xs whitespace-nowrap">
           {isRouteLoading ? (
             <>
@@ -268,7 +295,30 @@ export function BusMap({ vehicles }: BusMapProps) {
         </div>
       )}
 
-      <VehicleDetails vehicle={selectedVehicle} onClose={handleClose} />
+      {/* Stop info panel — appears above vehicle details if both open */}
+      {clickedStop && !showStopsList && (
+        <StopInfoPanel
+          stop={clickedStop}
+          lineColor={lineColor}
+          onClose={() => setClickedStop(null)}
+        />
+      )}
+
+      {/* Stops list modal */}
+      {showStopsList && selectedVehicle && (
+        <StopsListModal
+          lineName={selectedVehicle.name}
+          lineColor={lineColor}
+          routeData={routeData}
+          onClose={() => setShowStopsList(false)}
+          onStopSelect={(stop) => setClickedStop({ ...stop, role: "stop" })}
+        />
+      )}
+
+      {/* Vehicle details — hidden when stops list is open */}
+      {!showStopsList && (
+        <VehicleDetails vehicle={selectedVehicle} onClose={handleCloseVehicle} />
+      )}
     </div>
   );
 }

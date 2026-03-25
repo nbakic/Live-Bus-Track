@@ -207,8 +207,8 @@ export function BusMap({ vehicles }: BusMapProps) {
           chunkedLoading
           iconCreateFunction={createClusterCustomIcon}
           showCoverageOnHover={false}
-          maxClusterRadius={50}
-          disableClusteringAtZoom={15}
+          maxClusterRadius={30}
+          disableClusteringAtZoom={14}
         >
           {markers}
         </MarkerClusterGroup>

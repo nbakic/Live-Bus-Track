@@ -5,9 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
 
 export interface Vehicle {
   /** Unique vehicle ID */
@@ -24,17 +21,4 @@ export interface Vehicle {
   longitude: number;
   /** 1=in motion, 2=starting, 3=at stop, 6=standing */
   vehicleStatus: number;
-}
-
-export interface LiveVehiclesResponse {
-  vehicles: Vehicle[];
-  /** When the proxy fetched this data */
-  fetchedAt: string;
-  /** live or demo */
-  source: string;
-}
-
-export interface ErrorResponse {
-  error: string;
-  message: string;
 }

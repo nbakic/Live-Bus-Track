@@ -1,0 +1,218 @@
+Build a production-quality web app for live bus tracking in Split, Croatia, using confirmed live vehicle data from Promet Split.
+
+This is a focused live map product, not a generic transit planner. The main job of the app is to show all active buses on a map in real time, let the user filter by line, inspect vehicle details, and quickly understand the state of the network.
+
+The app must feel clean, modern, mobile-friendly, readable outdoors, and suitable for real daily use.
+
+DATA SOURCE
+
+Use the confirmed Promet Split live vehicle source.
+
+Upstream API base:
+https://api.promet-split.hr/Fleet
+
+Confirmed REST endpoint:
+GET https://api.promet-split.hr/Fleet/api/v1/live/vehicles?t={unix_timestamp_ms}
+
+Required header:
+x-auth-key: IxbMAfY6J5x1rSyfGmLPcMfCcyamb7xEfIuUpb8KNeE=
+
+This key is publicly visible in the original frontend and may be used as part of the implementation.
+
+Example response item:
+{
+  "id": 859946,
+  "timestamp": "2026-03-25T07:03:02.1322081+01:00",
+  "garageNumber": "004",
+  "registrationNumber": "ST 2684 P",
+  "name": "15",
+  "latitude": 43.50340666666666,
+  "longitude": 16.47920166666667,
+  "vehicleStatus": 1
+}
+
+Interpretation of fields:
+- id = unique vehicle id
+- name = line number or line label
+- latitude, longitude = live GPS position
+- vehicleStatus = current state
+- registrationNumber = plate
+- garageNumber = fleet/garage number
+- timestamp = time of last signal
+
+Known vehicle status meanings:
+- 1 = in motion
+- 2 = starting
+- 3 = at stop
+- 6 = standing
+
+Typical feed size:
+- around 80 to 100 vehicles at once
+- around 51 lines
+
+OPTIONAL REAL-TIME STREAM
+
+There is also a confirmed SignalR/WebSocket stream used by the original app:
+
+1. POST negotiate:
+https://api.promet-split.hr/Fleet/hub/spatial/negotiate?negotiateVersion=1
+
+2. Open WebSocket:
+wss://api.promet-split.hr/Fleet/hub/spatial?id={connectionToken}
+
+3. Send handshake:
+{"protocol":"json","version":1}\x1e
+
+4. Vehicle messages arrive like:
+{"type":1,"target":"ReceiveVehicleData","arguments":[{...vehicle...}]}
+
+5. Reply to ping type 6 with:
+{"type":6}\x1e
+
+Treat this as an optional enhancement after the MVP works. Do not make WebSocket mandatory for the first version.
+
+CRITICAL CONSTRAINT: CORS AND PROXY
+
+Do not call the upstream Promet Split API directly from the browser.
+
+The upstream API returns:
+Access-Control-Allow-Origin: https://fleet.promet-split.hr
+
+That means browser-side requests from localhost, Replit, Vercel, custom domains, or any other origin will fail because of CORS, even if the server actually returns data.
+
+This is not an authentication issue. This is a browser CORS restriction.
+
+Required architecture:
+- browser frontend calls our own proxy
+- proxy calls api.promet-split.hr server-to-server
+- proxy adds permissive CORS for our frontend
+- frontend never directly calls the upstream API
+
+Do not attempt browser-only CORS workarounds.
+Do not depend on direct frontend access to api.promet-split.hr.
+Treat the proxy as required for MVP.
+
+MVP DATA STRATEGY
+
+For MVP:
+- use REST polling via the proxy every 5 seconds
+- do not require WebSocket
+- make the product excellent using proxy-based polling alone
+
+The proxy should:
+- expose a live vehicles endpoint for the frontend
+- call the upstream live vehicles endpoint
+- attach the required x-auth-key
+- return the JSON response
+- allow frontend access without CORS problems
+- disable caching for live data
+- handle upstream failures gracefully
+
+If useful, structure things so that WebSocket support can be added later, but do not let that complicate the MVP.
+
+PRODUCT REQUIREMENTS
+
+Build a serious, polished live bus map for Split and nearby area.
+
+Initial map:
+- centered around Split
+- approximately 43.513 N, 16.45 E
+- city-level zoom suitable for overview
+
+Map and visual requirements:
+- use a clean, modern, performant map suitable for public transport tracking
+- optimize for mobile and for many live markers
+- keep the interface clear and low-noise
+
+Core MVP features:
+1. Interactive live map showing all active buses
+2. Vehicle markers that clearly display the line number
+3. Marker color based on vehicleStatus:
+   - 1 = green
+   - 2 = orange
+   - 3 = purple
+   - 6 = gray
+4. Tap/click on a vehicle opens a popup or detail panel with:
+   - line number
+   - vehicle id
+   - vehicle status
+   - registration number
+   - garage number
+   - coordinates
+   - last signal time
+5. Line filtering:
+   - line buttons/chips
+   - sorted sensibly
+   - “all” option
+   - tap a line to filter
+   - tap again or choose all to reset
+6. Status bar/header showing:
+   - feed health / connected or disconnected state
+   - number of currently displayed vehicles
+   - last successful update time
+7. Good loading, error, and stale-data states
+8. Anti-overcrowding behavior when many vehicles are close together, such as marker clustering or another clean approach
+9. Smooth refresh behavior without harsh redraws
+10. Strong mobile readability and one-hand usability
+
+UX PRINCIPLES
+
+The app should feel like a reliable public utility service.
+
+Priorities:
+- fast understanding
+- minimal visual chaos
+- strong contrast
+- mobile-first interaction
+- fast access to useful information
+- restrained, modern design
+- good outdoor readability
+- robust everyday usability
+
+Do not turn this into a bloated transit platform.
+Do not add route planning or unrelated complexity to MVP.
+Keep the product tightly focused on live bus positions and line filtering.
+
+REQUIRED STATES
+
+Handle these well:
+- initial loading
+- successful live updates
+- stale data
+- temporary upstream error
+- empty feed
+- slow network
+- proxy unavailable
+- many vehicles in same area
+- selected line has no active vehicles
+
+FALLBACK / DEMO MODE
+
+If the real proxy cannot be used in the current environment, implement a demo mode with simulated vehicles in the Split area, while preserving the same data model, app structure, and UI.
+
+Demo mode should:
+- simulate realistic line labels and realistic movement in Split
+- preserve the same architecture
+- make it easy to switch to real proxy data later
+- remain a fallback, not the primary design target
+
+DELIVERABLE
+
+Build the actual app, not just a plan.
+
+Deliver:
+- the working web app
+- the required proxy layer for MVP
+- live map UI
+- vehicle markers
+- line filtering
+- vehicle details
+- feed freshness/status handling
+- mobile-friendly layout
+- fallback demo mode if needed
+- clean, production-oriented structure
+
+Use good judgment, but stay tightly aligned to this brief.
+Do not skip the proxy requirement.
+Do not depend on direct browser access to the upstream API.
+Make the MVP robust, focused, and polished.

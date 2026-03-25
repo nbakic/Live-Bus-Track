@@ -1,0 +1,16 @@
+packages:
+  "leaflet": "Mapping library"
+  "react-leaflet": "React components for Leaflet maps"
+  "react-leaflet-cluster": "Marker clustering for React Leaflet"
+  "@types/leaflet": "TypeScript definitions for Leaflet"
+  "date-fns": "Date formatting for last updated time"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes safely"
+  "lucide-react": "Icons"
+
+images: []
+
+notes:
+  - Using OpenStreetMap tiles with CSS inversion to achieve the dark mode look.
+  - Relying on @workspace/api-client-react for TanStack Query hooks.
+  - Using custom DivIcons for map markers to avoid default Leaflet marker image loading issues and allow custom styling.

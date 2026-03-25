@@ -13,7 +13,11 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ErrorResponse,
+  HealthStatus,
+  LiveVehiclesResponse,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
 import type { ErrorType } from "../custom-fetch";
@@ -92,6 +96,82 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns all currently active buses from Promet Split
+ * @summary Get live vehicle positions
+ */
+export const getGetLiveVehiclesUrl = () => {
+  return `/api/vehicles/live`;
+};
+
+export const getLiveVehicles = async (
+  options?: RequestInit,
+): Promise<LiveVehiclesResponse> => {
+  return customFetch<LiveVehiclesResponse>(getGetLiveVehiclesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetLiveVehiclesQueryKey = () => {
+  return [`/api/vehicles/live`] as const;
+};
+
+export const getGetLiveVehiclesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLiveVehicles>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getLiveVehicles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLiveVehiclesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveVehicles>>> = ({
+    signal,
+  }) => getLiveVehicles({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLiveVehicles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLiveVehiclesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLiveVehicles>>
+>;
+export type GetLiveVehiclesQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get live vehicle positions
+ */
+
+export function useGetLiveVehicles<
+  TData = Awaited<ReturnType<typeof getLiveVehicles>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getLiveVehicles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLiveVehiclesQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

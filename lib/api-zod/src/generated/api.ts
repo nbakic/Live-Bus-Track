@@ -14,3 +14,26 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns all currently active buses from Promet Split
+ * @summary Get live vehicle positions
+ */
+export const GetLiveVehiclesResponse = zod.object({
+  vehicles: zod.array(
+    zod.object({
+      id: zod.number().describe("Unique vehicle ID"),
+      timestamp: zod.string().describe("Last signal time (ISO 8601)"),
+      garageNumber: zod.string().describe("Fleet\/garage number"),
+      registrationNumber: zod.string().describe("License plate"),
+      name: zod.string().describe("Line number\/label"),
+      latitude: zod.number(),
+      longitude: zod.number(),
+      vehicleStatus: zod
+        .number()
+        .describe("1=in motion, 2=starting, 3=at stop, 6=standing"),
+    }),
+  ),
+  fetchedAt: zod.string().describe("When the proxy fetched this data"),
+  source: zod.string().describe("live or demo"),
+});

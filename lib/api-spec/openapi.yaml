@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: vehicles
+    description: Live vehicle tracking
 paths:
   /healthz:
     get:
@@ -24,6 +25,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /vehicles/live:
+    get:
+      operationId: getLiveVehicles
+      tags: [vehicles]
+      summary: Get live vehicle positions
+      description: Returns all currently active buses from Promet Split
+      responses:
+        "200":
+          description: Live vehicle data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveVehiclesResponse"
+        "502":
+          description: Upstream error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +53,66 @@ components:
           type: string
       required:
         - status
-
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique vehicle ID
+        timestamp:
+          type: string
+          description: Last signal time (ISO 8601)
+        garageNumber:
+          type: string
+          description: Fleet/garage number
+        registrationNumber:
+          type: string
+          description: License plate
+        name:
+          type: string
+          description: Line number/label
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        vehicleStatus:
+          type: integer
+          description: "1=in motion, 2=starting, 3=at stop, 6=standing"
+      required:
+        - id
+        - timestamp
+        - garageNumber
+        - registrationNumber
+        - name
+        - latitude
+        - longitude
+        - vehicleStatus
+    LiveVehiclesResponse:
+      type: object
+      properties:
+        vehicles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Vehicle"
+        fetchedAt:
+          type: string
+          description: When the proxy fetched this data
+        source:
+          type: string
+          description: "live or demo"
+      required:
+        - vehicles
+        - fetchedAt
+        - source
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message

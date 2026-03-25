@@ -95,8 +95,8 @@ export function StopsListModal({
 
                       {/* Stop info */}
                       <div className="flex-1 min-w-0 py-0.5">
-                        <p className="text-sm font-medium text-foreground leading-tight">
-                          Stanica {i + 1}
+                        <p className="text-sm font-medium text-foreground leading-tight truncate">
+                          {stop.name ?? `Stanica ${i + 1}`}
                         </p>
                         <p className="text-xs text-muted-foreground font-mono mt-0.5">
                           {stop.lat.toFixed(4)}, {stop.lon.toFixed(4)}

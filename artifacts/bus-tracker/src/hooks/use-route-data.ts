@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export interface RouteData {
   routes: Array<Array<[number, number]>>;
-  stops: Array<{ lat: number; lon: number; name?: string; role: string }>;
+  stops: Array<{ lat: number; lon: number; name?: string; role: string; }>;
   source: "osm" | "osrm" | "none";
 }
 

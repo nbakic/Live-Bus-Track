@@ -143,24 +143,23 @@ export function BusMap({ vehicles }: BusMapProps) {
 
       // Dimmed but still readable when another line is focused
       const opacity = selectedVehicle && !isSameLine ? 0.55 : 1;
-      const size = isSelected ? 38 : isSameLine ? 34 : 30;
-      const borderWidth = isSelected ? 3 : 2;
-      const borderColor = isSelected ? "white" : "rgba(255,255,255,0.8)";
+      const size = isSelected ? 46 : isSameLine ? 42 : 38;
+      const fontSize = vehicle.name.length > 2 ? "11" : "14";
+      const borderColor = "white";
       const shadow = isSelected
-        ? `0 2px 10px rgba(0,0,0,0.5),0 0 0 4px rgba(255,255,255,0.2)`
-        : "0 2px 8px rgba(0,0,0,0.5)";
-      const fontSize = vehicle.name.length > 2 ? "9" : "11";
+        ? `0 3px 12px rgba(0,0,0,0.6), 0 0 0 3px rgba(255,255,255,0.4), 0 0 16px ${color}88`
+        : `0 3px 10px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.15)`;
 
       const html = `
-        <div style="opacity:${opacity};transition:opacity 0.2s ease;width:${size}px;height:${size}px;position:relative;">
-          <div style="position:absolute;inset:0;border-radius:50%;background:${color};border:${borderWidth}px solid ${borderColor};box-shadow:${shadow};"></div>
-          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:${fontSize}px;font-family:system-ui,sans-serif;letter-spacing:-0.3px;text-shadow:0 1px 3px rgba(0,0,0,0.7);">${vehicle.name}</span>
+        <div style="opacity:${opacity};transition:opacity 0.2s ease;width:${size}px;height:${size}px;position:relative;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+          <div style="position:absolute;inset:0;border-radius:50%;background:${color};border:3px solid ${borderColor};box-shadow:${shadow};"></div>
+          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:${fontSize}px;font-family:system-ui,sans-serif;letter-spacing:-0.5px;text-shadow:0 1px 4px rgba(0,0,0,0.8);">${vehicle.name}</span>
         </div>
       `;
 
       const icon = L.divIcon({
         html,
-        className: "bg-transparent border-0",
+        className: "!bg-transparent !border-0 !shadow-none",
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });

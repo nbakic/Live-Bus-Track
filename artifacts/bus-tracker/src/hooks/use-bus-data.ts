@@ -4,6 +4,7 @@ import { useGetLiveVehicles } from "@workspace/api-client-react";
 export function useBusData() {
   const query = useGetLiveVehicles({
     query: {
+      queryKey: ["live-vehicles"] as const,
       refetchInterval: 5000, // Poll every 5 seconds
       staleTime: 4000,
     }

@@ -1,4 +1,4 @@
-import { Wifi, WifiOff, AlertTriangle, Clock } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -13,65 +13,40 @@ interface StatusBarProps {
 
 export function StatusBar({ isLoading, isError, isStale, lastUpdated, vehicleCount, source }: StatusBarProps) {
   const formattedTime = lastUpdated ? format(lastUpdated, "HH:mm:ss") : "--:--:--";
-  
-  let statusColor = "bg-green-500";
-  let StatusIcon = Wifi;
-  let statusText = "Povezano";
 
-  if (isError) {
-    statusColor = "bg-red-500";
-    StatusIcon = WifiOff;
-    statusText = "Greška u vezi";
-  } else if (isStale) {
-    statusColor = "bg-yellow-500";
-    StatusIcon = AlertTriangle;
-    statusText = "Zastarjeli podaci";
-  } else if (isLoading && !lastUpdated) {
-    statusColor = "bg-blue-500";
-    StatusIcon = Clock;
-    statusText = "Povezivanje...";
-  }
+  const hasWarning = isError || isStale;
 
   return (
-    <div className="absolute top-4 left-4 right-4 z-[1000] pointer-events-none flex justify-center">
-      <div className="bg-background/80 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl px-4 py-3 flex flex-wrap items-center gap-4 pointer-events-auto max-w-2xl w-full justify-between md:justify-center animate-fade-in">
-        
-        {/* Connection Status */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex h-3 w-3">
-            {!isError && !isStale && (
-              <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", statusColor)}></span>
-            )}
-            <span className={cn("relative inline-flex rounded-full h-3 w-3", statusColor)}></span>
-          </div>
-          <span className="text-sm font-medium text-foreground hidden sm:inline-block">{statusText}</span>
-        </div>
-
-        <div className="w-px h-4 bg-white/20 hidden sm:block"></div>
-
-        {/* Count */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xl font-display font-bold text-foreground">{vehicleCount}</span>
-          <span className="text-sm text-muted-foreground font-medium">autobusa</span>
-        </div>
-
-        <div className="w-px h-4 bg-white/20 hidden sm:block"></div>
-
-        {/* Time */}
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          <span className="text-sm font-medium font-mono tracking-tight">{formattedTime}</span>
-        </div>
-
-        {/* Demo Badge */}
-        {source === "demo" && (
-          <>
-            <div className="w-px h-4 bg-white/20"></div>
-            <div className="bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded-md text-xs font-bold tracking-wider uppercase">
-              Demo Mod
-            </div>
-          </>
+    <div className="absolute top-3 left-3 z-[1000] pointer-events-none">
+      <div
+        className={cn(
+          "pointer-events-auto rounded-lg px-3 py-2 text-xs leading-relaxed",
+          "bg-white/70 dark:bg-black/50 backdrop-blur-md",
+          "border border-black/[0.06] dark:border-white/[0.08]",
+          "shadow-sm",
+          "transition-all duration-300"
         )}
+      >
+        {/* Vehicle count */}
+        <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-200">
+          <span className="font-normal text-gray-500 dark:text-gray-400">Autobusa:</span>
+          <span className="font-semibold tabular-nums">{vehicleCount}</span>
+          {source === "demo" && (
+            <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400 font-medium">
+              demo
+            </span>
+          )}
+        </div>
+
+        {/* Last updated */}
+        <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-200 mt-0.5">
+          <span className="font-normal text-gray-500 dark:text-gray-400">Ažurirano:</span>
+          <span className="font-semibold tabular-nums tracking-tight">{formattedTime}</span>
+
+          {hasWarning && (
+            <AlertTriangle className="w-3 h-3 text-amber-500 ml-0.5 shrink-0" />
+          )}
+        </div>
       </div>
     </div>
   );

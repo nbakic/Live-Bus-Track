@@ -13,7 +13,7 @@ interface StaticRouteEntry {
   stops: Array<{ lat: number; lon: number; role: string }>;
   source: "osm";
 }
-const staticRoutes = staticRoutesRaw.data as Record<string, StaticRouteEntry>;
+const staticRoutes = staticRoutesRaw.data as unknown as Record<string, StaticRouteEntry>;
 
 export interface RouteResult {
   routes: Array<Array<[number, number]>>;

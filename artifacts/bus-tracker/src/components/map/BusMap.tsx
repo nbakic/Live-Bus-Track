@@ -53,7 +53,7 @@ const TILE_ICONS: Record<TileMode, { bg: string; text: string }> = {
   osm:   { bg: "rgba(240,240,240,0.92)", text: "#333" },
 };
 
-const createClusterCustomIcon = (cluster: L.MarkerCluster) => {
+const createClusterCustomIcon = (cluster: any) => {
   const count = cluster.getChildCount();
   return L.divIcon({
     html: `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-weight:700;font-size:13px;color:white;">${count}</div>`,

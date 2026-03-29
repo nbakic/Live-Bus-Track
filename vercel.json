@@ -1,7 +1,7 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build",
-  "outputDirectory": "artifacts/bus-tracker/dist/public",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build && cp -r artifacts/bus-tracker/dist/public .",
+  "outputDirectory": "public",
   "framework": null,
   "functions": {
     "api/index.mjs": {

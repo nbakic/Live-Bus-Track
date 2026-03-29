@@ -17,7 +17,7 @@ export function FilterBar({ lines, selectedLine, onSelectLine, vehicles }: Filte
   }, {} as Record<string, number>);
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[1000] pointer-events-none px-4 pb-[calc(env(safe-area-inset-bottom,0px)+2.5rem)]">
+    <div className="absolute bottom-0 left-0 right-0 z-[1000] pointer-events-none px-4 pb-[calc(env(safe-area-inset-bottom,0px)+4rem)]">
       <div className="max-w-4xl mx-auto">
         <div className="bg-background/80 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-2 pointer-events-auto overflow-hidden flex">
           <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide no-scrollbar snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>

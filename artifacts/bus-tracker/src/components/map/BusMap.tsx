@@ -246,7 +246,7 @@ export function BusMap({ vehicles }: BusMapProps) {
       </MapContainer>
 
       {/* Layer picker */}
-      <div className="absolute bottom-[185px] right-3 z-[1000] flex flex-col items-end gap-1.5">
+      <div className="absolute bottom-[280px] right-3 z-[1000] flex flex-col items-end gap-1.5">
         {showTilePicker && (
           <div className="flex flex-col gap-1.5 items-end">
             {TILE_ORDER.map((mode) => (

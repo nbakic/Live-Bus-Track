@@ -1,10 +1,10 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @workspace/bus-tracker run build",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build",
   "outputDirectory": "public",
   "framework": null,
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index.ts" },
+    { "source": "/api/:path*", "destination": "/api/index.js" },
     { "source": "/:path*", "destination": "/index.html" }
   ]
 }

@@ -44,6 +44,9 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
+# Claude Code
+.claude/settings.local.json
+
 # Environment
 .env
 .env.local

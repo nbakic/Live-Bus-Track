@@ -117,6 +117,22 @@ async function buildAll() {
     banner: sharedBanner,
   });
 
+  // Vercel serverless bundle (app only, no .listen())
+  await esbuild({
+    entryPoints: { app: path.resolve(artifactDir, "src/app.ts") },
+    platform: "node",
+    bundle: true,
+    format: "esm",
+    outdir: distDir,
+    outExtension: { ".js": ".mjs" },
+    logLevel: "info",
+    external: sharedExternal,
+    sourcemap: "linked",
+    plugins: [
+      esbuildPluginPino({ transports: ["pino-pretty"] })
+    ],
+    banner: sharedBanner,
+  });
 }
 
 buildAll().catch((err) => {

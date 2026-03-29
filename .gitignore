@@ -51,5 +51,6 @@ Thumbs.db
 # Vercel
 .vercel/
 
-# Build output (Vercel serverless)
-/api/
+# Vercel serverless build artifacts (not api/index.ts source)
+/api/*.mjs
+/api/*.map

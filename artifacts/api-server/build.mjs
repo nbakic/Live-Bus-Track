@@ -117,25 +117,6 @@ async function buildAll() {
     banner: sharedBanner,
   });
 
-  // Vercel serverless function bundle (exports Express app, no .listen())
-  const vercelOutDir = path.resolve(artifactDir, "../../api");
-  await rm(vercelOutDir, { recursive: true, force: true });
-
-  await esbuild({
-    entryPoints: { index: path.resolve(artifactDir, "src/app.ts") },
-    platform: "node",
-    bundle: true,
-    format: "esm",
-    outdir: vercelOutDir,
-    outExtension: { ".js": ".mjs" },
-    logLevel: "info",
-    external: sharedExternal,
-    sourcemap: "linked",
-    plugins: [
-      esbuildPluginPino({ transports: ["pino-pretty"] })
-    ],
-    banner: sharedBanner,
-  });
 }
 
 buildAll().catch((err) => {

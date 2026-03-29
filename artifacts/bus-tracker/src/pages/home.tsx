@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useBusData } from "@/hooks/use-bus-data";
+import { usePrefetchRoutes } from "@/hooks/use-route-data";
 import { BusMap } from "@/components/map/BusMap";
-import { StatusBar } from "@/components/layout/StatusBar";
+import { StatusBar, DisclaimerModal } from "@/components/layout/StatusBar";
 import { FilterBar } from "@/components/layout/FilterBar";
+import { InstallBanner } from "@/components/layout/InstallBanner";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function Home() {
   const { data, isLoading, isError, isStale, dataUpdatedAt, uniqueLines, refetch } = useBusData();
+  usePrefetchRoutes();
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
 
   const allVehicles = data?.vehicles || [];
@@ -71,7 +74,12 @@ export default function Home() {
 
       {/* The Map */}
       <BusMap vehicles={visibleVehicles} />
-      
+
+      {/* First-visit disclaimer */}
+      <DisclaimerModal />
+
+      {/* PWA install prompt (2nd & 4th visit, after 20s) */}
+      <InstallBanner />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build && cp -r artifacts/bus-tracker/dist/public .",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && cd artifacts/bus-tracker && npx vite build --outDir ../../public",
   "outputDirectory": "public",
   "framework": null,
   "functions": {

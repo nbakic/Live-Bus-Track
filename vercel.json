@@ -1,13 +1,8 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "echo CWD=$(pwd) && ls -la && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build && echo BUILD_DONE && find . -name index.html -type f 2>/dev/null && ls -la public 2>/dev/null || echo NO_PUBLIC",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build",
   "outputDirectory": "public",
   "framework": null,
-  "functions": {
-    "api/index.mjs": {
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.mjs" },
     { "source": "/:path*", "destination": "/index.html" }

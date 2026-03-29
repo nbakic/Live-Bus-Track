@@ -1,6 +1,6 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build",
+  "buildCommand": "echo CWD=$(pwd) && ls -la && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build && echo BUILD_DONE && find . -name index.html -type f 2>/dev/null && ls -la public 2>/dev/null || echo NO_PUBLIC",
   "outputDirectory": "public",
   "framework": null,
   "functions": {

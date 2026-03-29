@@ -1,6 +1,6 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm -r --if-present run build",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/bus-tracker run build",
   "outputDirectory": "artifacts/bus-tracker/dist/public",
   "framework": null,
   "functions": {

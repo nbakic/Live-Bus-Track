@@ -139,7 +139,7 @@ export function BusMap({ vehicles }: BusMapProps) {
     selectedVehicle?.name ?? null
   );
 
-  const lineColor = selectedVehicle ? getStatusColor(selectedVehicle.vehicleStatus) : "#6366f1";
+  const lineColor = "#6366f1";
 
   const tile = TILE_LAYERS[tileMode];
   const tileIcon = TILE_ICONS[tileMode];

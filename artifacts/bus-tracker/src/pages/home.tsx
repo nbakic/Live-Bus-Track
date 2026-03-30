@@ -8,14 +8,14 @@ import { InstallBanner } from "@/components/layout/InstallBanner";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function Home() {
-  const { data, isLoading, isError, isStale, dataUpdatedAt, uniqueLines, refetch } = useBusData();
+  const { data, isLoading, isError, isStale, dataUpdatedAt, uniqueLines, vehiclesWithBearing, refetch } = useBusData();
   usePrefetchRoutes();
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
 
-  const allVehicles = data?.vehicles || [];
-  
+  const allVehicles = vehiclesWithBearing;
+
   // Filter vehicles by selected line
-  const visibleVehicles = selectedLine 
+  const visibleVehicles = selectedLine
     ? allVehicles.filter(v => v.name === selectedLine)
     : allVehicles;
 

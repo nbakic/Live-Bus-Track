@@ -6,15 +6,15 @@ import {
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { Loader2, Layers } from "lucide-react";
-import type { Vehicle } from "@workspace/api-client-react";
 import { getStatusColor } from "@/lib/utils";
+import type { VehicleWithBearing } from "@/hooks/use-bus-data";
 import { VehicleDetails } from "./VehicleDetails";
 import { StopInfoPanel } from "./StopInfoPanel";
 import { StopsListModal } from "./StopsListModal";
 import { useRouteData } from "@/hooks/use-route-data";
 
 interface BusMapProps {
-  vehicles: Vehicle[];
+  vehicles: VehicleWithBearing[];
 }
 
 interface StopPoint {
@@ -165,8 +165,17 @@ export function BusMap({ vehicles }: BusMapProps) {
         ? `0 3px 12px rgba(0,0,0,0.6), 0 0 0 3px rgba(255,255,255,0.4), 0 0 16px ${color}88`
         : `0 3px 10px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.15)`;
 
+      const showArrow = vehicle.bearing !== null && (isSelected || isSameLine);
+      const arrowOffset = size / 2 + 10;
+      const arrowHtml = showArrow
+        ? `<div style="position:absolute;top:50%;left:50%;width:0;height:0;z-index:10;transform:translate(-50%,-50%) rotate(${vehicle.bearing}deg) translateY(-${arrowOffset}px);">
+            <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:14px solid white;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.7));"></div>
+          </div>`
+        : "";
+
       const html = `
         <div style="opacity:${opacity};transition:opacity 0.2s ease;width:${size}px;height:${size}px;position:relative;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+          ${arrowHtml}
           <div style="position:absolute;inset:0;border-radius:50%;background:${color};border:3px solid white;box-shadow:${shadow};"></div>
           <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:${fontSize}px;font-family:system-ui,sans-serif;letter-spacing:-0.5px;text-shadow:0 1px 4px rgba(0,0,0,0.8);">${vehicle.name}</span>
         </div>

@@ -26,7 +26,7 @@ interface StopPoint {
 const DEFAULT_CENTER: [number, number] = [43.513, 16.45];
 const DEFAULT_ZOOM = 13;
 
-type TileMode = "dark" | "light" | "osm";
+type TileMode = "dark" | "light" | "osm" | "satellite";
 
 const TILE_LAYERS: Record<TileMode, { url: string; attribution: string; label: string }> = {
   dark: {
@@ -44,13 +44,19 @@ const TILE_LAYERS: Record<TileMode, { url: string; attribution: string; label: s
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     label: "OSM",
   },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Sources: Esri, Maxar, Earthstar Geographics',
+    label: "Satelit",
+  },
 };
 
-const TILE_ORDER: TileMode[] = ["dark", "light", "osm"];
+const TILE_ORDER: TileMode[] = ["dark", "light", "osm", "satellite"];
 const TILE_ICONS: Record<TileMode, { bg: string; text: string }> = {
-  dark:  { bg: "rgba(20,21,35,0.92)",    text: "#fff" },
-  light: { bg: "rgba(255,255,255,0.92)", text: "#333" },
-  osm:   { bg: "rgba(240,240,240,0.92)", text: "#333" },
+  dark:      { bg: "rgba(20,21,35,0.92)",    text: "#fff" },
+  light:     { bg: "rgba(255,255,255,0.92)", text: "#333" },
+  osm:       { bg: "rgba(240,240,240,0.92)", text: "#333" },
+  satellite: { bg: "rgba(30,60,30,0.92)",    text: "#fff" },
 };
 
 const createClusterCustomIcon = (cluster: any) => {

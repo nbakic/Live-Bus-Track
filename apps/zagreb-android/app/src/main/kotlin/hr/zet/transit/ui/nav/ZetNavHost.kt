@@ -11,8 +11,10 @@ import androidx.navigation.navArgument
 import hr.zet.transit.ui.alerts.AlertsScreen
 import hr.zet.transit.ui.favorites.FavoritesScreen
 import hr.zet.transit.ui.map.MapScreen
+import hr.zet.transit.ui.nearby.NearbyScreen
 import hr.zet.transit.ui.routes.RouteDetailScreen
 import hr.zet.transit.ui.routes.RoutesScreen
+import hr.zet.transit.ui.routines.RoutinesScreen
 import hr.zet.transit.ui.search.SearchScreen
 import hr.zet.transit.ui.stop.StopDetailScreen
 
@@ -36,6 +38,8 @@ fun ZetNavHost(modifier: Modifier = Modifier) {
                 onFavoritesClick = { navController.navigate(Destinations.FAVORITES) },
                 onSearchClick = { navController.navigate(Destinations.SEARCH) },
                 onAlertsClick = { navController.navigate(Destinations.ALERTS) },
+                onRoutinesClick = { navController.navigate(Destinations.ROUTINES) },
+                onNearbyClick = { navController.navigate(Destinations.NEARBY) },
             )
         }
 
@@ -78,6 +82,14 @@ fun ZetNavHost(modifier: Modifier = Modifier) {
 
         composable(Destinations.ALERTS) {
             AlertsScreen()
+        }
+
+        composable(Destinations.ROUTINES) {
+            RoutinesScreen(onStopClick = { navController.navigateToStop(it) })
+        }
+
+        composable(Destinations.NEARBY) {
+            NearbyScreen(onStopClick = { navController.navigateToStop(it) })
         }
     }
 }

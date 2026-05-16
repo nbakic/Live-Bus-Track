@@ -3,6 +3,7 @@ package hr.zet.transit.ui.map
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +37,8 @@ fun MapScreen(
     onFavoritesClick: () -> Unit,
     onSearchClick: () -> Unit,
     onAlertsClick: () -> Unit,
+    onRoutinesClick: () -> Unit,
+    onNearbyClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = koinViewModel(),
 ) {
@@ -82,34 +85,34 @@ fun MapScreen(
                 .fillMaxWidth(),
         )
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
         ) {
-            ExtendedFloatingActionButton(
-                text = { Text("Traži") },
-                icon = {},
-                onClick = onSearchClick,
-            )
-            ExtendedFloatingActionButton(
-                text = { Text("Omiljeni") },
-                icon = {},
-                onClick = onFavoritesClick,
-            )
-            ExtendedFloatingActionButton(
-                text = { Text("Obavijesti") },
-                icon = {},
-                onClick = onAlertsClick,
-            )
-            ExtendedFloatingActionButton(
-                text = { Text("Linije") },
-                icon = {},
-                onClick = onRoutesClick,
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MapAction("Traži", onSearchClick)
+                MapAction("U blizini", onNearbyClick)
+                MapAction("Rutine", onRoutinesClick)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MapAction("Omiljeni", onFavoritesClick)
+                MapAction("Obavijesti", onAlertsClick)
+                MapAction("Linije", onRoutesClick)
+            }
         }
     }
+}
+
+@Composable
+private fun MapAction(label: String, onClick: () -> Unit) {
+    ExtendedFloatingActionButton(
+        text = { Text(label) },
+        icon = {},
+        onClick = onClick,
+    )
 }
 
 /** Vraća `stopId` stajališta pod tapom, ili null ako ondje nema stajališta. */

@@ -5,8 +5,11 @@ import hr.zet.transit.data.remote.TransitApiClient
 import hr.zet.transit.ui.alerts.AlertsViewModel
 import hr.zet.transit.ui.favorites.FavoritesViewModel
 import hr.zet.transit.ui.map.MapViewModel
+import hr.zet.transit.ui.nearby.LocationProvider
+import hr.zet.transit.ui.nearby.NearbyViewModel
 import hr.zet.transit.ui.routes.RouteDetailViewModel
 import hr.zet.transit.ui.routes.RoutesViewModel
+import hr.zet.transit.ui.routines.RoutinesViewModel
 import hr.zet.transit.ui.search.SearchViewModel
 import hr.zet.transit.ui.stop.StopDetailViewModel
 import org.koin.android.ext.koin.androidContext
@@ -22,6 +25,8 @@ val androidModule = module {
 
     single { TransitApiClient(baseUrl = ApiConfig.LOCAL) }
 
+    single { LocationProvider(androidContext()) }
+
     viewModel { MapViewModel(observeVehicles = get(), staticRepository = get()) }
     viewModel {
         StopDetailViewModel(
@@ -29,6 +34,7 @@ val androidModule = module {
             staticRepository = get(),
             favoritesRepository = get(),
             toggleFavorite = get(),
+            routineRepository = get(),
         )
     }
     viewModel { RoutesViewModel(staticRepository = get()) }
@@ -36,4 +42,6 @@ val androidModule = module {
     viewModel { FavoritesViewModel(favoritesRepository = get(), staticRepository = get()) }
     viewModel { SearchViewModel(search = get()) }
     viewModel { AlertsViewModel(observeAlerts = get()) }
+    viewModel { RoutinesViewModel(routineRepository = get(), observeArrivals = get()) }
+    viewModel { NearbyViewModel(getNearbyStops = get(), locationProvider = get()) }
 }

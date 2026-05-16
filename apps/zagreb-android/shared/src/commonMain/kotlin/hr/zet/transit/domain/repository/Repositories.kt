@@ -4,6 +4,8 @@ import hr.zet.transit.domain.model.Arrival
 import hr.zet.transit.domain.model.Route
 import hr.zet.transit.domain.model.RouteSchedule
 import hr.zet.transit.domain.model.RouteShape
+import hr.zet.transit.domain.model.Routine
+import hr.zet.transit.domain.model.RoutineKind
 import hr.zet.transit.domain.model.ServiceAlert
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.Vehicle
@@ -56,4 +58,11 @@ interface FavoritesRepository {
     suspend fun addFavorite(stopId: String)
     suspend fun removeFavorite(stopId: String)
     suspend fun isFavorite(stopId: String): Boolean
+}
+
+/** Rutine Dom/Posao/Škola — lokalno, bez backenda (A1.5 plana). */
+interface RoutineRepository {
+    fun observeRoutines(): Flow<List<Routine>>
+    suspend fun setRoutine(routine: Routine)
+    suspend fun clearRoutine(kind: RoutineKind)
 }

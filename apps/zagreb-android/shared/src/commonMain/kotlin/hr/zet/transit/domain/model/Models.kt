@@ -60,6 +60,24 @@ data class DirectionSchedule(
     val departures: List<String>,
 )
 
+/** Tip rutine — imenovano svakodnevno odredište dnevnog putnika (A1.5). */
+enum class RoutineKind {
+    HOME,
+    WORK,
+    SCHOOL,
+}
+
+/**
+ * Rutina (A1.5) — imenovano mjesto vezano na stajalište s kojeg korisnik
+ * najčešće kreće. Hrani jutarnji ekran i pojednostavljuje dnevni tok.
+ */
+data class Routine(
+    val kind: RoutineKind,
+    val stopId: String,
+    /** Naziv stajališta — cacheiran radi prikaza bez dodatnog upita. */
+    val stopName: String,
+)
+
 /**
  * Živa pozicija vozila iz GTFS-RT VehiclePosition.
  * RT je opcionalni sloj nad statičkim GTFS-om (Plan B za R1, sekcija 9).

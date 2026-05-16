@@ -20,6 +20,12 @@ object Destinations {
     /** Prometne obavijesti (A0.4). */
     const val ALERTS = "alerts"
 
+    /** Rutine Dom/Posao/Škola + jutarnji ekran (A1.5). */
+    const val ROUTINES = "routines"
+
+    /** Najbliža stajališta iz lokacije (A0.5). */
+    const val NEARBY = "nearby"
+
     /** Stajalište-detalji (A0.2) — argument: stopId. */
     const val STOP_DETAIL = "stop/{stopId}"
 

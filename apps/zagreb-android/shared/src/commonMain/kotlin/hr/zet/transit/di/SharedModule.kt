@@ -6,9 +6,11 @@ import hr.zet.transit.data.remote.TransitApiClient
 import hr.zet.transit.data.remote.createPlatformHttpClient
 import hr.zet.transit.data.repository.FavoritesRepositoryImpl
 import hr.zet.transit.data.repository.RealtimeRepositoryImpl
+import hr.zet.transit.data.repository.RoutineRepositoryImpl
 import hr.zet.transit.data.repository.StaticRepositoryImpl
 import hr.zet.transit.domain.repository.FavoritesRepository
 import hr.zet.transit.domain.repository.RealtimeRepository
+import hr.zet.transit.domain.repository.RoutineRepository
 import hr.zet.transit.domain.repository.StaticRepository
 import hr.zet.transit.domain.usecase.GetNearbyStopsUseCase
 import hr.zet.transit.domain.usecase.ObserveAlertsUseCase
@@ -29,6 +31,7 @@ val sharedModule = module {
     single<StaticRepository> { StaticRepositoryImpl(db = get(), api = get()) }
     single<RealtimeRepository> { RealtimeRepositoryImpl(get()) }
     single<FavoritesRepository> { FavoritesRepositoryImpl(get()) }
+    single<RoutineRepository> { RoutineRepositoryImpl(get()) }
 
     // GTFS static importer — dijeli vlastiti HttpClient (download ZIP-a s backenda).
     single { createPlatformHttpClient() }

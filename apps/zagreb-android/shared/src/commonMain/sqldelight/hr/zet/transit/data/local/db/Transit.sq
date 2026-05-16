@@ -32,6 +32,13 @@ CREATE TABLE FavoriteStop (
     stopId TEXT NOT NULL PRIMARY KEY
 );
 
+-- Rutine (A1.5) — Dom/Posao/Škola; kind je jedinstven (po jedna rutina svake vrste).
+CREATE TABLE RoutineEntity (
+    kind     TEXT NOT NULL PRIMARY KEY,  -- 'HOME' | 'WORK' | 'SCHOOL'
+    stopId   TEXT NOT NULL,
+    stopName TEXT NOT NULL
+);
+
 -- --- Routes ---
 selectAllRoutes:
 SELECT * FROM RouteEntity;
@@ -83,3 +90,13 @@ INSERT OR IGNORE INTO FavoriteStop(stopId) VALUES (?);
 
 deleteFavorite:
 DELETE FROM FavoriteStop WHERE stopId = ?;
+
+-- --- Routines ---
+selectRoutines:
+SELECT * FROM RoutineEntity;
+
+upsertRoutine:
+INSERT OR REPLACE INTO RoutineEntity(kind, stopId, stopName) VALUES (?, ?, ?);
+
+deleteRoutine:
+DELETE FROM RoutineEntity WHERE kind = ?;

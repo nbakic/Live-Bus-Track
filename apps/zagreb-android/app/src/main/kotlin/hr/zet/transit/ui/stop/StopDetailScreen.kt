@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hr.zet.transit.domain.model.Arrival
+import hr.zet.transit.domain.model.RoutineKind
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -72,6 +74,17 @@ fun StopDetailScreen(
                 )
             }
         }
+
+        // Postavi ovo stajalište kao rutinu (A1.5).
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            RoutineChip("Dom", RoutineKind.HOME, viewModel::onSetRoutine)
+            RoutineChip("Posao", RoutineKind.WORK, viewModel::onSetRoutine)
+            RoutineChip("Škola", RoutineKind.SCHOOL, viewModel::onSetRoutine)
+        }
+
         when {
             state.isLoading -> Box(
                 modifier = Modifier.fillMaxSize(),
@@ -133,4 +146,16 @@ private fun ArrivalRow(arrival: Arrival, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+@Composable
+private fun RoutineChip(
+    label: String,
+    kind: RoutineKind,
+    onSet: (RoutineKind) -> Unit,
+) {
+    AssistChip(
+        onClick = { onSet(kind) },
+        label = { Text(label) },
+    )
 }

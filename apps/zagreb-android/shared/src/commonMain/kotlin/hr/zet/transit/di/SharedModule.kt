@@ -13,6 +13,7 @@ import hr.zet.transit.domain.repository.StaticRepository
 import hr.zet.transit.domain.usecase.GetNearbyStopsUseCase
 import hr.zet.transit.domain.usecase.ObserveArrivalsUseCase
 import hr.zet.transit.domain.usecase.ObserveVehiclesUseCase
+import hr.zet.transit.domain.usecase.SearchUseCase
 import hr.zet.transit.domain.usecase.ToggleFavoriteUseCase
 import org.koin.dsl.module
 
@@ -36,6 +37,7 @@ val sharedModule = module {
     factory { ObserveArrivalsUseCase(get()) }
     factory { GetNearbyStopsUseCase(get()) }
     factory { ToggleFavoriteUseCase(get()) }
+    factory { SearchUseCase(get()) }
 }
 
 /**

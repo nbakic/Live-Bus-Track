@@ -1,7 +1,9 @@
 package hr.zet.transit.ui.map
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,6 +33,8 @@ import org.maplibre.android.maps.MapLibreMap
 fun MapScreen(
     onStopClick: (String) -> Unit,
     onRoutesClick: () -> Unit,
+    onFavoritesClick: () -> Unit,
+    onSearchClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = koinViewModel(),
 ) {
@@ -77,14 +81,28 @@ fun MapScreen(
                 .fillMaxWidth(),
         )
 
-        ExtendedFloatingActionButton(
-            text = { Text("Linije") },
-            icon = {},
-            onClick = onRoutesClick,
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
-        )
+        ) {
+            ExtendedFloatingActionButton(
+                text = { Text("Traži") },
+                icon = {},
+                onClick = onSearchClick,
+            )
+            ExtendedFloatingActionButton(
+                text = { Text("Omiljeni") },
+                icon = {},
+                onClick = onFavoritesClick,
+            )
+            ExtendedFloatingActionButton(
+                text = { Text("Linije") },
+                icon = {},
+                onClick = onRoutesClick,
+            )
+        }
     }
 }
 

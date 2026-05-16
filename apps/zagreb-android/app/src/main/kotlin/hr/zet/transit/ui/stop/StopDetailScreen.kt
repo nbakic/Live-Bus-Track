@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,11 +45,33 @@ fun StopDetailScreen(
     LaunchedEffect(stopId) { viewModel.load(stopId) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Text(
-            text = state.stopName,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = state.stopName,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = viewModel::onToggleFavorite) {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = if (state.isFavorite) {
+                        "Ukloni iz omiljenih"
+                    } else {
+                        "Dodaj u omiljena"
+                    },
+                    tint = if (state.isFavorite) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+        }
         when {
             state.isLoading -> Box(
                 modifier = Modifier.fillMaxSize(),

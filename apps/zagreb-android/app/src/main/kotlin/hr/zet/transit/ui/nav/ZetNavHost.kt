@@ -2,18 +2,22 @@ package hr.zet.transit.ui.nav
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import hr.zet.transit.ui.favorites.FavoritesScreen
 import hr.zet.transit.ui.map.MapScreen
+import hr.zet.transit.ui.routes.RouteDetailScreen
 import hr.zet.transit.ui.routes.RoutesScreen
+import hr.zet.transit.ui.search.SearchScreen
 import hr.zet.transit.ui.stop.StopDetailScreen
 
 /**
- * Navigacijski graf aplikacije. Karta je početni ekran; iz nje se ide na
- * stajalište-detalje (tap na karti) i na pregled linija.
+ * Navigacijski graf aplikacije. Karta je početni ekran; iz nje se dolazi do
+ * stajalište-detalja (tap na karti), pregleda linija, omiljenih i pretrage.
  */
 @Composable
 fun ZetNavHost(modifier: Modifier = Modifier) {
@@ -26,12 +30,10 @@ fun ZetNavHost(modifier: Modifier = Modifier) {
     ) {
         composable(Destinations.MAP) {
             MapScreen(
-                onStopClick = { stopId ->
-                    navController.navigate(Destinations.stopDetail(stopId))
-                },
-                onRoutesClick = {
-                    navController.navigate(Destinations.ROUTES)
-                },
+                onStopClick = { navController.navigateToStop(it) },
+                onRoutesClick = { navController.navigate(Destinations.ROUTES) },
+                onFavoritesClick = { navController.navigate(Destinations.FAVORITES) },
+                onSearchClick = { navController.navigate(Destinations.SEARCH) },
             )
         }
 
@@ -40,15 +42,42 @@ fun ZetNavHost(modifier: Modifier = Modifier) {
             arguments = listOf(
                 navArgument(Destinations.ARG_STOP_ID) { type = NavType.StringType },
             ),
-        ) { backStackEntry ->
-            val stopId = backStackEntry.arguments
-                ?.getString(Destinations.ARG_STOP_ID)
-                .orEmpty()
-            StopDetailScreen(stopId = stopId)
+        ) { entry ->
+            StopDetailScreen(
+                stopId = entry.arguments?.getString(Destinations.ARG_STOP_ID).orEmpty(),
+            )
+        }
+
+        composable(
+            route = Destinations.ROUTE_DETAIL,
+            arguments = listOf(
+                navArgument(Destinations.ARG_ROUTE_ID) { type = NavType.StringType },
+            ),
+        ) { entry ->
+            RouteDetailScreen(
+                routeId = entry.arguments?.getString(Destinations.ARG_ROUTE_ID).orEmpty(),
+            )
         }
 
         composable(Destinations.ROUTES) {
-            RoutesScreen()
+            RoutesScreen(onRouteClick = { navController.navigateToRoute(it) })
+        }
+
+        composable(Destinations.FAVORITES) {
+            FavoritesScreen(onStopClick = { navController.navigateToStop(it) })
+        }
+
+        composable(Destinations.SEARCH) {
+            SearchScreen(
+                onStopClick = { navController.navigateToStop(it) },
+                onRouteClick = { navController.navigateToRoute(it) },
+            )
         }
     }
 }
+
+private fun NavController.navigateToStop(stopId: String) =
+    navigate(Destinations.stopDetail(stopId))
+
+private fun NavController.navigateToRoute(routeId: String) =
+    navigate(Destinations.routeDetail(routeId))

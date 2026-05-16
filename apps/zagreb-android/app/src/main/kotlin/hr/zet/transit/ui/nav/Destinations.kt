@@ -11,11 +11,24 @@ object Destinations {
     /** Pregled svih linija (A1.1). */
     const val ROUTES = "routes"
 
+    /** Omiljena stajališta (A0.3). */
+    const val FAVORITES = "favorites"
+
+    /** Pretraga (A1.3). */
+    const val SEARCH = "search"
+
     /** Stajalište-detalji (A0.2) — argument: stopId. */
     const val STOP_DETAIL = "stop/{stopId}"
+
+    /** Detalji linije (A1.1) — argument: routeId. */
+    const val ROUTE_DETAIL = "route/{routeId}"
 
     /** Gradi konkretnu rutu za stajalište-detalje. */
     fun stopDetail(stopId: String): String = "stop/$stopId"
 
+    /** Gradi konkretnu rutu za detalje linije. */
+    fun routeDetail(routeId: String): String = "route/$routeId"
+
     const val ARG_STOP_ID = "stopId"
+    const val ARG_ROUTE_ID = "routeId"
 }

@@ -1,7 +1,9 @@
 package hr.zet.transit.di
 
+import hr.zet.transit.data.gtfs.GtfsImporter
 import hr.zet.transit.data.local.db.TransitDatabase
 import hr.zet.transit.data.remote.TransitApiClient
+import hr.zet.transit.data.remote.createPlatformHttpClient
 import hr.zet.transit.data.repository.FavoritesRepositoryImpl
 import hr.zet.transit.data.repository.RealtimeRepositoryImpl
 import hr.zet.transit.data.repository.StaticRepositoryImpl
@@ -25,6 +27,10 @@ val sharedModule = module {
     single<StaticRepository> { StaticRepositoryImpl(get()) }
     single<RealtimeRepository> { RealtimeRepositoryImpl(get()) }
     single<FavoritesRepository> { FavoritesRepositoryImpl(get()) }
+
+    // GTFS static importer — dijeli vlastiti HttpClient (download ZIP-a s backenda).
+    single { createPlatformHttpClient() }
+    single { GtfsImporter(httpClient = get(), db = get()) }
 
     factory { ObserveVehiclesUseCase(get()) }
     factory { ObserveArrivalsUseCase(get()) }

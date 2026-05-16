@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.graphics.RectF
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -22,18 +24,19 @@ import org.koin.androidx.compose.koinViewModel
 import org.maplibre.android.maps.MapLibreMap
 
 /**
- * Karta vozila (A0.1) — MapLibre karta sa živim slojem vozila.
- *
- * Karta drži vlastiti [MapLibreMap]; kad stigne novi `uiState.vehicles`,
- * [VehicleLayer.update] samo zamijeni GeoJSON podatke (bez rekreiranja sloja).
+ * Karta vozila (A0.1) — MapLibre karta sa živim slojem vozila i statičkim
+ * slojem stajališta. Tap na stajalište navigira na stajalište-detalje.
  */
 @Composable
 fun MapScreen(
+    onStopClick: (String) -> Unit,
+    onRoutesClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val vehicleLayer = remember { VehicleLayer() }
+    val stopLayer = remember { StopLayer() }
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
 
     Box(
@@ -44,13 +47,27 @@ fun MapScreen(
         MapLibreView(
             modifier = Modifier.fillMaxSize(),
             onMapReady = { readyMap, style ->
+                // Stajališta prvo (ispod), vozila iznad.
+                stopLayer.attach(style)
                 vehicleLayer.attach(style)
+                readyMap.addOnMapClickListener { latLng ->
+                    val tappedStopId = readyMap.findStopAt(latLng)
+                    if (tappedStopId != null) {
+                        onStopClick(tappedStopId)
+                        true
+                    } else {
+                        false
+                    }
+                }
                 map = readyMap
             },
         )
 
-        // Sloj vozila se osvježi na svaku promjenu stanja kad je karta spremna.
-        map?.let { vehicleLayer.update(it, state.vehicles) }
+        // Slojevi se osvježe na svaku promjenu stanja kad je karta spremna.
+        map?.let { readyMap ->
+            stopLayer.setStops(readyMap, state.stops)
+            vehicleLayer.update(readyMap, state.vehicles)
+        }
 
         StatusOverlay(
             vehicleCount = state.vehicles.size,
@@ -59,8 +76,34 @@ fun MapScreen(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth(),
         )
+
+        ExtendedFloatingActionButton(
+            text = { Text("Linije") },
+            icon = {},
+            onClick = onRoutesClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+        )
     }
 }
+
+/** Vraća `stopId` stajališta pod tapom, ili null ako ondje nema stajališta. */
+private fun MapLibreMap.findStopAt(latLng: org.maplibre.android.geometry.LatLng): String? {
+    val screenPoint = projection.toScreenLocation(latLng)
+    // Tap-tolerancija ±12 px — prst nije precizan kao kursor.
+    val touchArea = RectF(
+        screenPoint.x - TAP_TOLERANCE_PX,
+        screenPoint.y - TAP_TOLERANCE_PX,
+        screenPoint.x + TAP_TOLERANCE_PX,
+        screenPoint.y + TAP_TOLERANCE_PX,
+    )
+    return queryRenderedFeatures(touchArea, StopLayer.LAYER_ID)
+        .firstOrNull()
+        ?.getStringProperty(StopLayer.PROP_STOP_ID)
+}
+
+private const val TAP_TOLERANCE_PX = 12f
 
 /** Tanka traka na vrhu karte — broj vozila + degradacija kad RT padne. */
 @Composable

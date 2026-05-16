@@ -23,5 +23,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Home-screen widget (A0.7) — sljedeći dolazak na omiljenom stajalištu. -->
+        <receiver
+            android:name=".widget.NextArrivalWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_next_arrival_info" />
+        </receiver>
     </application>
 </manifest>

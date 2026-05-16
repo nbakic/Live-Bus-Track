@@ -53,6 +53,16 @@ fun Application.configureRouting(
                 call.respond(staticFeed.routes().toFeedResponse())
             }
 
+            // A1.2 — geometrija rute iz shapes.txt.
+            get("/routes/{routeId}/shape") {
+                val routeId = call.parameters["routeId"]
+                if (routeId.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "missing routeId"))
+                    return@get
+                }
+                call.respond(staticFeed.routeShape(routeId).toFeedResponse())
+            }
+
             // A0.6 — sva stajališta iz GTFS static.
             get("/stops") {
                 call.respond(staticFeed.stops().toFeedResponse())

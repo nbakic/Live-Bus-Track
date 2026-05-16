@@ -40,6 +40,15 @@ data class Stop(
 data class Heading(val degrees: Float)
 
 /**
+ * Geometrija rute — niz točaka koje crtaju liniju na karti (GTFS `shapes.txt`).
+ * Linija može imati više shapeova (smjerovi, varijante); ovo je jedan.
+ */
+data class RouteShape(
+    val routeId: String,
+    val points: List<LatLng>,
+)
+
+/**
  * Živa pozicija vozila iz GTFS-RT VehiclePosition.
  * RT je opcionalni sloj nad statičkim GTFS-om (Plan B za R1, sekcija 9).
  */

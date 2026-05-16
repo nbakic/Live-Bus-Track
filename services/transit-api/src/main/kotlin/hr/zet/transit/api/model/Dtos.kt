@@ -57,6 +57,18 @@ data class StopDto(
 )
 
 @Serializable
+data class LatLngDto(
+    val lat: Double,
+    val lng: Double,
+)
+
+@Serializable
+data class RouteShapeDto(
+    val routeId: String,
+    val points: List<LatLngDto>,
+)
+
+@Serializable
 data class FeedResponse<T>(
     val data: T,
     val fetchedAt: Long,

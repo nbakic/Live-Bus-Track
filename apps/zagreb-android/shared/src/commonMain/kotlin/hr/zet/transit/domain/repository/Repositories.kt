@@ -2,6 +2,7 @@ package hr.zet.transit.domain.repository
 
 import hr.zet.transit.domain.model.Arrival
 import hr.zet.transit.domain.model.Route
+import hr.zet.transit.domain.model.RouteShape
 import hr.zet.transit.domain.model.ServiceAlert
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.Vehicle
@@ -25,6 +26,9 @@ interface StaticRepository {
     suspend fun getStop(stopId: String): Stop?
     /** Stajališta unutar zadanog radijusa (metri) od točke. */
     suspend fun getStopsNear(lat: Double, lng: Double, radiusMeters: Int): List<Stop>
+
+    /** Geometrija rute za prikaz na karti (A1.2); null ako linija nema shape. */
+    suspend fun getRouteShape(routeId: String): RouteShape?
 }
 
 /**

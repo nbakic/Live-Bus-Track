@@ -17,6 +17,9 @@ object Destinations {
     /** Pretraga (A1.3). */
     const val SEARCH = "search"
 
+    /** Prometne obavijesti (A0.4). */
+    const val ALERTS = "alerts"
+
     /** Stajalište-detalji (A0.2) — argument: stopId. */
     const val STOP_DETAIL = "stop/{stopId}"
 

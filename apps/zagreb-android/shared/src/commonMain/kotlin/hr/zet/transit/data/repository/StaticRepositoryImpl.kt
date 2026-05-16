@@ -3,8 +3,10 @@ package hr.zet.transit.data.repository
 import hr.zet.transit.data.local.db.RouteEntity
 import hr.zet.transit.data.local.db.StopEntity
 import hr.zet.transit.data.local.db.TransitDatabase
+import hr.zet.transit.data.remote.TransitApiClient
 import hr.zet.transit.domain.model.LatLng
 import hr.zet.transit.domain.model.Route
+import hr.zet.transit.domain.model.RouteShape
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.TransitMode
 import hr.zet.transit.domain.repository.StaticRepository
@@ -20,6 +22,7 @@ import kotlin.math.cos
  */
 class StaticRepositoryImpl(
     private val db: TransitDatabase,
+    private val api: TransitApiClient,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : StaticRepository {
 
@@ -59,6 +62,16 @@ class StaticRepositoryImpl(
             .filter { haversineMeters(lat, lng, it.position.lat, it.position.lng) <= radiusMeters }
             .sortedBy { haversineMeters(lat, lng, it.position.lat, it.position.lng) }
     }
+
+    override suspend fun getRouteShape(routeId: String): RouteShape? =
+        withContext(ioDispatcher) {
+            // Geometrija dolazi s backenda (shapes.txt); nije u lokalnoj bazi.
+            val dto = api.getRouteShape(routeId).data ?: return@withContext null
+            RouteShape(
+                routeId = dto.routeId,
+                points = dto.points.map { LatLng(it.lat, it.lng) },
+            )
+        }
 
     private companion object {
         const val METERS_PER_DEGREE_LAT = 111_320.0

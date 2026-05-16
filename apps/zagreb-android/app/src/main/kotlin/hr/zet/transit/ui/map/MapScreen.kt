@@ -35,6 +35,7 @@ fun MapScreen(
     onRoutesClick: () -> Unit,
     onFavoritesClick: () -> Unit,
     onSearchClick: () -> Unit,
+    onAlertsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = koinViewModel(),
 ) {
@@ -96,6 +97,11 @@ fun MapScreen(
                 text = { Text("Omiljeni") },
                 icon = {},
                 onClick = onFavoritesClick,
+            )
+            ExtendedFloatingActionButton(
+                text = { Text("Obavijesti") },
+                icon = {},
+                onClick = onAlertsClick,
             )
             ExtendedFloatingActionButton(
                 text = { Text("Linije") },

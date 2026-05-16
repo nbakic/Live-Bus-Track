@@ -3,7 +3,9 @@ package hr.zet.transit.api.feed
 import hr.zet.transit.api.Config
 import hr.zet.transit.api.cache.CachedValue
 import hr.zet.transit.api.cache.TtlCache
+import hr.zet.transit.api.model.LatLngDto
 import hr.zet.transit.api.model.RouteDto
+import hr.zet.transit.api.model.RouteShapeDto
 import hr.zet.transit.api.model.StopDto
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -26,6 +28,8 @@ class GtfsStaticFeedService(
         val zipBytes: ByteArray,
         val routes: List<RouteDto>,
         val stops: List<StopDto>,
+        /** routeId → geometrija rute (spojeni shapeovi te linije). */
+        val shapesByRoute: Map<String, RouteShapeDto>,
     )
 
     private val cache = TtlCache(
@@ -35,11 +39,18 @@ class GtfsStaticFeedService(
 
     private suspend fun fetchAndParse(): StaticData {
         val zipBytes = httpClient.get(Config.zetGtfsStaticUrl).readBytes()
-        val files = readZipEntries(zipBytes, setOf("routes.txt", "stops.txt"))
+        val files = readZipEntries(
+            zipBytes,
+            setOf("routes.txt", "stops.txt", "shapes.txt", "trips.txt"),
+        )
         return StaticData(
             zipBytes = zipBytes,
             routes = parseRoutes(files["routes.txt"].orEmpty()),
             stops = parseStops(files["stops.txt"].orEmpty()),
+            shapesByRoute = parseShapesByRoute(
+                shapesTxt = files["shapes.txt"].orEmpty(),
+                tripsTxt = files["trips.txt"].orEmpty(),
+            ),
         )
     }
 
@@ -48,6 +59,10 @@ class GtfsStaticFeedService(
 
     suspend fun stops(): CachedValue<List<StopDto>> =
         cache.get().let { CachedValue(it.value.stops, it.fetchedAtEpochSeconds) }
+
+    /** Geometrija rute za danu liniju; null ako linija nema shape. */
+    suspend fun routeShape(routeId: String): CachedValue<RouteShapeDto?> =
+        cache.get().let { CachedValue(it.value.shapesByRoute[routeId], it.fetchedAtEpochSeconds) }
 
     /** Sirovi GTFS ZIP — klijent ga importira preko `GtfsImporter`-a. */
     suspend fun rawZip(): ByteArray = cache.get().value.zipBytes
@@ -87,6 +102,44 @@ class GtfsStaticFeedService(
             val lng = row["stop_lon"]?.toDoubleOrNull() ?: return@mapNotNull null
             StopDto(id = id, name = row["stop_name"].orEmpty(), lat = lat, lng = lng)
         }
+
+    /**
+     * Spaja `shapes.txt` + `trips.txt` u routeId → geometrija.
+     *
+     * `shapes.txt`: shape_id, lat, lon, sequence. `trips.txt` linki route_id
+     * → shape_id. Linija ima više shapeova (smjerovi/varijante) — uzimamo
+     * onaj s najviše točaka (reprezentativan za prikaz na karti).
+     */
+    private fun parseShapesByRoute(shapesTxt: String, tripsTxt: String): Map<String, RouteShapeDto> {
+        // shape_id → točke sortirane po sequence
+        val shapePoints: Map<String, List<LatLngDto>> = CsvParser.parse(shapesTxt)
+            .mapNotNull { row ->
+                val shapeId = row["shape_id"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                val lat = row["shape_pt_lat"]?.toDoubleOrNull() ?: return@mapNotNull null
+                val lng = row["shape_pt_lon"]?.toDoubleOrNull() ?: return@mapNotNull null
+                val seq = row["shape_pt_sequence"]?.toIntOrNull() ?: 0
+                Triple(shapeId, seq, LatLngDto(lat, lng))
+            }
+            .groupBy({ it.first }, { it.second to it.third })
+            .mapValues { (_, pts) -> pts.sortedBy { it.first }.map { it.second } }
+
+        // route_id → kandidatski shape_id-ovi iz trips.txt
+        return CsvParser.parse(tripsTxt)
+            .mapNotNull { row ->
+                val routeId = row["route_id"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                val shapeId = row["shape_id"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                routeId to shapeId
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapNotNull { (routeId, shapeIds) ->
+                val bestShape = shapeIds.distinct()
+                    .mapNotNull { shapePoints[it] }
+                    .maxByOrNull { it.size }
+                    ?: return@mapNotNull null
+                routeId to RouteShapeDto(routeId = routeId, points = bestShape)
+            }
+            .toMap()
+    }
 
     private companion object {
         /** Static GTFS se mijenja rijetko — 6 h TTL je dovoljno čest. */

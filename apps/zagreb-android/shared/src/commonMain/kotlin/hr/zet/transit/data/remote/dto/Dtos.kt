@@ -39,6 +39,18 @@ data class ServiceAlertDto(
     val severity: String,      // "INFO" | "WARNING" | "SEVERE"
 )
 
+@Serializable
+data class LatLngDto(
+    val lat: Double,
+    val lng: Double,
+)
+
+@Serializable
+data class RouteShapeDto(
+    val routeId: String,
+    val points: List<LatLngDto>,
+)
+
 /** Omotač odgovora — backend dodaje meta polja (svježina, izvor). */
 @Serializable
 data class FeedResponse<T>(

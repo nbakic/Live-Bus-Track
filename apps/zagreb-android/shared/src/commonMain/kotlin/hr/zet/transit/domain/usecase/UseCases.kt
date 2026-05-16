@@ -1,6 +1,7 @@
 package hr.zet.transit.domain.usecase
 
 import hr.zet.transit.domain.model.Arrival
+import hr.zet.transit.domain.model.ServiceAlert
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.Vehicle
 import hr.zet.transit.domain.repository.FavoritesRepository
@@ -28,6 +29,13 @@ class ObserveArrivalsUseCase(
 ) {
     operator fun invoke(stopId: String): Flow<List<Arrival>> =
         realtime.observeArrivals(stopId)
+}
+
+/** A0.4 — aktivni service alerts (prometne obavijesti). */
+class ObserveAlertsUseCase(
+    private val realtime: RealtimeRepository,
+) {
+    operator fun invoke(): Flow<List<ServiceAlert>> = realtime.observeAlerts()
 }
 
 /**

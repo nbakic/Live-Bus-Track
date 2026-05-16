@@ -11,6 +11,7 @@ import hr.zet.transit.domain.repository.FavoritesRepository
 import hr.zet.transit.domain.repository.RealtimeRepository
 import hr.zet.transit.domain.repository.StaticRepository
 import hr.zet.transit.domain.usecase.GetNearbyStopsUseCase
+import hr.zet.transit.domain.usecase.ObserveAlertsUseCase
 import hr.zet.transit.domain.usecase.ObserveArrivalsUseCase
 import hr.zet.transit.domain.usecase.ObserveVehiclesUseCase
 import hr.zet.transit.domain.usecase.SearchUseCase
@@ -25,7 +26,7 @@ import org.koin.dsl.module
 val sharedModule = module {
     single { TransitDatabase(get()) }
 
-    single<StaticRepository> { StaticRepositoryImpl(get()) }
+    single<StaticRepository> { StaticRepositoryImpl(db = get(), api = get()) }
     single<RealtimeRepository> { RealtimeRepositoryImpl(get()) }
     single<FavoritesRepository> { FavoritesRepositoryImpl(get()) }
 
@@ -35,6 +36,7 @@ val sharedModule = module {
 
     factory { ObserveVehiclesUseCase(get()) }
     factory { ObserveArrivalsUseCase(get()) }
+    factory { ObserveAlertsUseCase(get()) }
     factory { GetNearbyStopsUseCase(get()) }
     factory { ToggleFavoriteUseCase(get()) }
     factory { SearchUseCase(get()) }

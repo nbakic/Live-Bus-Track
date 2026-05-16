@@ -2,6 +2,7 @@ package hr.zet.transit.di
 
 import hr.zet.transit.data.local.DatabaseDriverFactory
 import hr.zet.transit.data.remote.TransitApiClient
+import hr.zet.transit.ui.alerts.AlertsViewModel
 import hr.zet.transit.ui.favorites.FavoritesViewModel
 import hr.zet.transit.ui.map.MapViewModel
 import hr.zet.transit.ui.routes.RouteDetailViewModel
@@ -34,4 +35,5 @@ val androidModule = module {
     viewModel { RouteDetailViewModel(staticRepository = get()) }
     viewModel { FavoritesViewModel(favoritesRepository = get(), staticRepository = get()) }
     viewModel { SearchViewModel(search = get()) }
+    viewModel { AlertsViewModel(observeAlerts = get()) }
 }

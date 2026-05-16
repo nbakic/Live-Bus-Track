@@ -4,8 +4,10 @@ import hr.zet.transit.data.local.db.RouteEntity
 import hr.zet.transit.data.local.db.StopEntity
 import hr.zet.transit.data.local.db.TransitDatabase
 import hr.zet.transit.data.remote.TransitApiClient
+import hr.zet.transit.domain.model.DirectionSchedule
 import hr.zet.transit.domain.model.LatLng
 import hr.zet.transit.domain.model.Route
+import hr.zet.transit.domain.model.RouteSchedule
 import hr.zet.transit.domain.model.RouteShape
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.TransitMode
@@ -70,6 +72,18 @@ class StaticRepositoryImpl(
             RouteShape(
                 routeId = dto.routeId,
                 points = dto.points.map { LatLng(it.lat, it.lng) },
+            )
+        }
+
+    override suspend fun getRouteSchedule(routeId: String): RouteSchedule? =
+        withContext(ioDispatcher) {
+            // Vozni red dolazi s backenda (stop_times.txt); nije u lokalnoj bazi.
+            val dto = api.getRouteSchedule(routeId).data ?: return@withContext null
+            RouteSchedule(
+                routeId = dto.routeId,
+                directions = dto.directions.map {
+                    DirectionSchedule(headsign = it.headsign, departures = it.departures)
+                },
             )
         }
 

@@ -68,6 +68,23 @@ data class RouteShapeDto(
     val points: List<LatLngDto>,
 )
 
+/**
+ * Vozni red linije (A1.4) — vremena polazaka grupirana po smjeru.
+ * `departures` su "HH:MM" stringovi (GTFS dopušta i sate >24 za noćne).
+ */
+@Serializable
+data class RouteScheduleDto(
+    val routeId: String,
+    val directions: List<DirectionScheduleDto>,
+)
+
+@Serializable
+data class DirectionScheduleDto(
+    /** Naziv odredišta smjera (GTFS trip_headsign). */
+    val headsign: String,
+    val departures: List<String>,
+)
+
 @Serializable
 data class FeedResponse<T>(
     val data: T,

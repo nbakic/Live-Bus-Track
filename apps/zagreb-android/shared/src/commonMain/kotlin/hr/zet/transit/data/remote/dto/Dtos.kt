@@ -51,6 +51,18 @@ data class RouteShapeDto(
     val points: List<LatLngDto>,
 )
 
+@Serializable
+data class RouteScheduleDto(
+    val routeId: String,
+    val directions: List<DirectionScheduleDto>,
+)
+
+@Serializable
+data class DirectionScheduleDto(
+    val headsign: String,
+    val departures: List<String>,
+)
+
 /** Omotač odgovora — backend dodaje meta polja (svježina, izvor). */
 @Serializable
 data class FeedResponse<T>(

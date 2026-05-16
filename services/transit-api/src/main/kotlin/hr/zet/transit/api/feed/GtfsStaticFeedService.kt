@@ -3,8 +3,10 @@ package hr.zet.transit.api.feed
 import hr.zet.transit.api.Config
 import hr.zet.transit.api.cache.CachedValue
 import hr.zet.transit.api.cache.TtlCache
+import hr.zet.transit.api.model.DirectionScheduleDto
 import hr.zet.transit.api.model.LatLngDto
 import hr.zet.transit.api.model.RouteDto
+import hr.zet.transit.api.model.RouteScheduleDto
 import hr.zet.transit.api.model.RouteShapeDto
 import hr.zet.transit.api.model.StopDto
 import io.ktor.client.HttpClient
@@ -30,6 +32,8 @@ class GtfsStaticFeedService(
         val stops: List<StopDto>,
         /** routeId → geometrija rute (spojeni shapeovi te linije). */
         val shapesByRoute: Map<String, RouteShapeDto>,
+        /** routeId → vozni red (polasci po smjerovima). */
+        val schedulesByRoute: Map<String, RouteScheduleDto>,
     )
 
     private val cache = TtlCache(
@@ -41,7 +45,7 @@ class GtfsStaticFeedService(
         val zipBytes = httpClient.get(Config.zetGtfsStaticUrl).readBytes()
         val files = readZipEntries(
             zipBytes,
-            setOf("routes.txt", "stops.txt", "shapes.txt", "trips.txt"),
+            setOf("routes.txt", "stops.txt", "shapes.txt", "trips.txt", "stop_times.txt"),
         )
         return StaticData(
             zipBytes = zipBytes,
@@ -50,6 +54,10 @@ class GtfsStaticFeedService(
             shapesByRoute = parseShapesByRoute(
                 shapesTxt = files["shapes.txt"].orEmpty(),
                 tripsTxt = files["trips.txt"].orEmpty(),
+            ),
+            schedulesByRoute = parseSchedulesByRoute(
+                tripsTxt = files["trips.txt"].orEmpty(),
+                stopTimesTxt = files["stop_times.txt"].orEmpty(),
             ),
         )
     }
@@ -63,6 +71,10 @@ class GtfsStaticFeedService(
     /** Geometrija rute za danu liniju; null ako linija nema shape. */
     suspend fun routeShape(routeId: String): CachedValue<RouteShapeDto?> =
         cache.get().let { CachedValue(it.value.shapesByRoute[routeId], it.fetchedAtEpochSeconds) }
+
+    /** Vozni red linije; null ako linija nema voznog reda. */
+    suspend fun routeSchedule(routeId: String): CachedValue<RouteScheduleDto?> =
+        cache.get().let { CachedValue(it.value.schedulesByRoute[routeId], it.fetchedAtEpochSeconds) }
 
     /** Sirovi GTFS ZIP — klijent ga importira preko `GtfsImporter`-a. */
     suspend fun rawZip(): ByteArray = cache.get().value.zipBytes
@@ -139,6 +151,67 @@ class GtfsStaticFeedService(
                 routeId to RouteShapeDto(routeId = routeId, points = bestShape)
             }
             .toMap()
+    }
+
+    /**
+     * Spaja `trips.txt` + `stop_times.txt` u routeId → vozni red.
+     *
+     * Vozni red linije = vremena polazaka s prvog stajališta svakog tripa
+     * (min `stop_sequence`), grupirano po `trip_headsign` (smjer). GTFS
+     * dopušta vremena >24 h (noćni polasci) — normaliziramo na "HH:MM".
+     */
+    private fun parseSchedulesByRoute(
+        tripsTxt: String,
+        stopTimesTxt: String,
+    ): Map<String, RouteScheduleDto> {
+        // trip_id → (route_id, headsign)
+        val tripInfo: Map<String, Pair<String, String>> = CsvParser.parse(tripsTxt)
+            .mapNotNull { row ->
+                val tripId = row["trip_id"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                val routeId = row["route_id"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                tripId to (routeId to row["trip_headsign"].orEmpty())
+            }
+            .toMap()
+
+        // trip_id → polazno vrijeme (najmanji stop_sequence)
+        val tripDeparture: Map<String, String> = CsvParser.parse(stopTimesTxt)
+            .mapNotNull { row ->
+                val tripId = row["trip_id"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                val seq = row["stop_sequence"]?.toIntOrNull() ?: return@mapNotNull null
+                val time = row["departure_time"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                Triple(tripId, seq, time)
+            }
+            .groupBy { it.first }
+            .mapValues { (_, rows) -> rows.minBy { it.second }.third }
+
+        // (routeId, headsign) → sortirana lista polazaka
+        return tripDeparture.entries
+            .mapNotNull { (tripId, time) ->
+                val info = tripInfo[tripId] ?: return@mapNotNull null
+                Triple(info.first, info.second, normalizeTime(time))
+            }
+            .groupBy { it.first }
+            .mapValues { (routeId, rows) ->
+                val directions = rows
+                    .groupBy { it.second }
+                    .map { (headsign, deps) ->
+                        DirectionScheduleDto(
+                            headsign = headsign,
+                            departures = deps.map { it.third }.distinct().sorted(),
+                        )
+                    }
+                    .sortedBy { it.headsign }
+                RouteScheduleDto(routeId = routeId, directions = directions)
+            }
+    }
+
+    /** GTFS "HH:MM:SS" (sati mogu biti >24) → "HH:MM". */
+    private fun normalizeTime(gtfsTime: String): String {
+        val parts = gtfsTime.split(":")
+        if (parts.size < 2) return gtfsTime
+        val hh = parts[0].trim().padStart(2, '0')
+        val mm = parts[1].trim().padStart(2, '0')
+        return "$hh:$mm"
     }
 
     private companion object {

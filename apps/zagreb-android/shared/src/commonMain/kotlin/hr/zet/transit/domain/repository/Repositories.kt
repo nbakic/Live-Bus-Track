@@ -2,6 +2,7 @@ package hr.zet.transit.domain.repository
 
 import hr.zet.transit.domain.model.Arrival
 import hr.zet.transit.domain.model.Route
+import hr.zet.transit.domain.model.RouteSchedule
 import hr.zet.transit.domain.model.RouteShape
 import hr.zet.transit.domain.model.ServiceAlert
 import hr.zet.transit.domain.model.Stop
@@ -29,6 +30,9 @@ interface StaticRepository {
 
     /** Geometrija rute za prikaz na karti (A1.2); null ako linija nema shape. */
     suspend fun getRouteShape(routeId: String): RouteShape?
+
+    /** Kompletan statički vozni red linije (A1.4); null ako ga nema. */
+    suspend fun getRouteSchedule(routeId: String): RouteSchedule?
 }
 
 /**

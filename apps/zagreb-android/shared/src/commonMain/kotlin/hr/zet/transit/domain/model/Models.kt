@@ -48,6 +48,18 @@ data class RouteShape(
     val points: List<LatLng>,
 )
 
+/** Vozni red linije (A1.4) — polasci grupirani po smjeru. */
+data class RouteSchedule(
+    val routeId: String,
+    val directions: List<DirectionSchedule>,
+)
+
+/** Vozni red jednog smjera linije — vremena polazaka kao "HH:MM". */
+data class DirectionSchedule(
+    val headsign: String,
+    val departures: List<String>,
+)
+
 /**
  * Živa pozicija vozila iz GTFS-RT VehiclePosition.
  * RT je opcionalni sloj nad statičkim GTFS-om (Plan B za R1, sekcija 9).

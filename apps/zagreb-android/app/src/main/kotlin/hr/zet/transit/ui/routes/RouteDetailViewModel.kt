@@ -3,6 +3,7 @@ package hr.zet.transit.ui.routes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import hr.zet.transit.domain.model.Route
+import hr.zet.transit.domain.model.RouteSchedule
 import hr.zet.transit.domain.model.RouteShape
 import hr.zet.transit.domain.repository.StaticRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,11 @@ class RouteDetailViewModel(
             val shape = runCatching { staticRepository.getRouteShape(routeId) }.getOrNull()
             _uiState.value = _uiState.value.copy(shape = shape)
         }
+        viewModelScope.launch {
+            // Vozni red također s backenda, odvojeno od osnovnih podataka.
+            val schedule = runCatching { staticRepository.getRouteSchedule(routeId) }.getOrNull()
+            _uiState.value = _uiState.value.copy(schedule = schedule)
+        }
     }
 }
 
@@ -41,5 +47,6 @@ class RouteDetailViewModel(
 data class RouteDetailUiState(
     val route: Route? = null,
     val shape: RouteShape? = null,
+    val schedule: RouteSchedule? = null,
     val isLoading: Boolean = true,
 )

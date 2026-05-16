@@ -63,6 +63,16 @@ fun Application.configureRouting(
                 call.respond(staticFeed.routeShape(routeId).toFeedResponse())
             }
 
+            // A1.4 — kompletan statički vozni red linije.
+            get("/routes/{routeId}/schedule") {
+                val routeId = call.parameters["routeId"]
+                if (routeId.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "missing routeId"))
+                    return@get
+                }
+                call.respond(staticFeed.routeSchedule(routeId).toFeedResponse())
+            }
+
             // A0.6 — sva stajališta iz GTFS static.
             get("/stops") {
                 call.respond(staticFeed.stops().toFeedResponse())

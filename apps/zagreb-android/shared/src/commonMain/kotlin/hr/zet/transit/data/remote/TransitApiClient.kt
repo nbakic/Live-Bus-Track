@@ -2,6 +2,7 @@ package hr.zet.transit.data.remote
 
 import hr.zet.transit.data.remote.dto.ArrivalDto
 import hr.zet.transit.data.remote.dto.FeedResponse
+import hr.zet.transit.data.remote.dto.RouteScheduleDto
 import hr.zet.transit.data.remote.dto.RouteShapeDto
 import hr.zet.transit.data.remote.dto.ServiceAlertDto
 import hr.zet.transit.data.remote.dto.VehicleDto
@@ -46,6 +47,11 @@ class TransitApiClient(
     suspend fun getRouteShape(routeId: String): FeedResponse<RouteShapeDto?> =
         httpClient.get(baseUrl) {
             url { appendPathSegments(API_VERSION, "routes", routeId, "shape") }
+        }.body()
+
+    suspend fun getRouteSchedule(routeId: String): FeedResponse<RouteScheduleDto?> =
+        httpClient.get(baseUrl) {
+            url { appendPathSegments(API_VERSION, "routes", routeId, "schedule") }
         }.body()
 
     companion object {

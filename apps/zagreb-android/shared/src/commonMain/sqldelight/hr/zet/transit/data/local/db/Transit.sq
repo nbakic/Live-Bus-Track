@@ -1,0 +1,85 @@
+-- SQLDelight schema za statički GTFS.
+-- Statički GTFS se parsira iz ZIP-a u ovu bazu; atomarni staging-swap pri
+-- osvježavanju (sekcija 2 plana — GTFS static freshness).
+
+CREATE TABLE RouteEntity (
+    id          TEXT NOT NULL PRIMARY KEY,
+    shortName   TEXT NOT NULL,
+    longName    TEXT NOT NULL,
+    mode        TEXT NOT NULL,   -- 'TRAM' | 'BUS'
+    color       TEXT
+);
+
+CREATE TABLE StopEntity (
+    id    TEXT NOT NULL PRIMARY KEY,
+    name  TEXT NOT NULL,
+    lat   REAL NOT NULL,
+    lng   REAL NOT NULL
+);
+
+CREATE INDEX stop_lat_lng ON StopEntity(lat, lng);
+
+-- Meta — prati svježinu GTFS feeda (SHA-256 ZIP-a, feed_version).
+CREATE TABLE FeedMeta (
+    id          INTEGER NOT NULL PRIMARY KEY DEFAULT 1,
+    sha256      TEXT NOT NULL,
+    feedVersion TEXT,
+    importedAt  INTEGER NOT NULL  -- Unix sekunde
+);
+
+-- Omiljena stajališta (A0.3) — lokalno, bez backenda.
+CREATE TABLE FavoriteStop (
+    stopId TEXT NOT NULL PRIMARY KEY
+);
+
+-- --- Routes ---
+selectAllRoutes:
+SELECT * FROM RouteEntity;
+
+selectRouteById:
+SELECT * FROM RouteEntity WHERE id = ?;
+
+insertRoute:
+INSERT OR REPLACE INTO RouteEntity(id, shortName, longName, mode, color)
+VALUES (?, ?, ?, ?, ?);
+
+deleteAllRoutes:
+DELETE FROM RouteEntity;
+
+-- --- Stops ---
+selectAllStops:
+SELECT * FROM StopEntity;
+
+selectStopById:
+SELECT * FROM StopEntity WHERE id = ?;
+
+-- Gruba bounding-box pretraga; točan radijus filtrira se u Kotlinu.
+selectStopsInBox:
+SELECT * FROM StopEntity
+WHERE lat BETWEEN :minLat AND :maxLat
+  AND lng BETWEEN :minLng AND :maxLng;
+
+insertStop:
+INSERT OR REPLACE INTO StopEntity(id, name, lat, lng)
+VALUES (?, ?, ?, ?);
+
+deleteAllStops:
+DELETE FROM StopEntity;
+
+-- --- FeedMeta ---
+selectFeedMeta:
+SELECT * FROM FeedMeta WHERE id = 1;
+
+upsertFeedMeta:
+INSERT OR REPLACE INTO FeedMeta(id, sha256, feedVersion, importedAt)
+VALUES (1, ?, ?, ?);
+
+-- --- Favorites ---
+selectFavorites:
+SELECT stopId FROM FavoriteStop;
+
+insertFavorite:
+INSERT OR IGNORE INTO FavoriteStop(stopId) VALUES (?);
+
+deleteFavorite:
+DELETE FROM FavoriteStop WHERE stopId = ?;

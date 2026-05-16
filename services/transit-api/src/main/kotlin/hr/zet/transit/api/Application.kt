@@ -1,6 +1,7 @@
 package hr.zet.transit.api
 
 import hr.zet.transit.api.feed.GtfsRtFeedService
+import hr.zet.transit.api.feed.GtfsStaticFeedService
 import hr.zet.transit.api.model.ErrorResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -46,8 +47,9 @@ fun Application.module() {
     }
 
     val zetHttpClient = HttpClient(CIO)
-    val feedService = GtfsRtFeedService(zetHttpClient)
+    val rtFeed = GtfsRtFeedService(zetHttpClient)
+    val staticFeed = GtfsStaticFeedService(zetHttpClient)
 
-    configureRouting(feedService)
+    configureRouting(rtFeed, staticFeed)
     log.info("transit-api pokrenut na portu ${Config.port}")
 }

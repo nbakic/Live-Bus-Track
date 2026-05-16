@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.work.runtime)
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(platform("androidx.compose:compose-bom:2024.09.00"))

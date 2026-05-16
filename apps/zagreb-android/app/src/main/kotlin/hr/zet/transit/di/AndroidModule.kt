@@ -3,6 +3,7 @@ package hr.zet.transit.di
 import hr.zet.transit.data.local.DatabaseDriverFactory
 import hr.zet.transit.data.remote.TransitApiClient
 import hr.zet.transit.ui.map.MapViewModel
+import hr.zet.transit.ui.stop.StopDetailViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -17,4 +18,5 @@ val androidModule = module {
     single { TransitApiClient(baseUrl = ApiConfig.LOCAL) }
 
     viewModel { MapViewModel(get()) }
+    viewModel { StopDetailViewModel(observeArrivals = get(), staticRepository = get()) }
 }

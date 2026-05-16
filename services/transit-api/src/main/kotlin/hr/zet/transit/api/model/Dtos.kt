@@ -40,6 +40,23 @@ data class ServiceAlertDto(
 )
 
 @Serializable
+data class RouteDto(
+    val id: String,
+    val shortName: String,
+    val longName: String,
+    val mode: String,          // "TRAM" | "BUS"
+    val color: String? = null,
+)
+
+@Serializable
+data class StopDto(
+    val id: String,
+    val name: String,
+    val lat: Double,
+    val lng: Double,
+)
+
+@Serializable
 data class FeedResponse<T>(
     val data: T,
     val fetchedAt: Long,

@@ -47,4 +47,7 @@ object ApiConfig {
     const val LOCAL = "http://10.0.2.2:8080"
     /** Placeholder — produkcijski URL postavlja se u Fazi 0. */
     const val PRODUCTION = "https://api.zet-transit.example"
+
+    /** Backend ZIP proxy za GTFS static — `GtfsImporter` ga koristi. */
+    fun gtfsStaticZipUrl(baseUrl: String): String = "$baseUrl/v1/gtfs/static.zip"
 }

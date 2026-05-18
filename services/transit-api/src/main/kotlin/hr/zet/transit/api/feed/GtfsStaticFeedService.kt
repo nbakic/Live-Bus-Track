@@ -34,6 +34,8 @@ class GtfsStaticFeedService(
         val shapesByRoute: Map<String, RouteShapeDto>,
         /** routeId → vozni red (polasci po smjerovima). */
         val schedulesByRoute: Map<String, RouteScheduleDto>,
+        /** Lookup za obogaćivanje GTFS-RT feeda (mode, ime, headsign). */
+        val lookup: GtfsLookup,
     )
 
     private val cache = TtlCache(
@@ -47,9 +49,10 @@ class GtfsStaticFeedService(
             zipBytes,
             setOf("routes.txt", "stops.txt", "shapes.txt", "trips.txt", "stop_times.txt"),
         )
+        val routes = parseRoutes(files["routes.txt"].orEmpty())
         return StaticData(
             zipBytes = zipBytes,
-            routes = parseRoutes(files["routes.txt"].orEmpty()),
+            routes = routes,
             stops = parseStops(files["stops.txt"].orEmpty()),
             shapesByRoute = parseShapesByRoute(
                 shapesTxt = files["shapes.txt"].orEmpty(),
@@ -59,6 +62,28 @@ class GtfsStaticFeedService(
                 tripsTxt = files["trips.txt"].orEmpty(),
                 stopTimesTxt = files["stop_times.txt"].orEmpty(),
             ),
+            lookup = parseLookup(
+                routes = routes,
+                tripsTxt = files["trips.txt"].orEmpty(),
+            ),
+        )
+    }
+
+    /** GTFS-RT obogaćivanje (C5) — vraća lookup; prazan ako static nije zreo. */
+    suspend fun lookup(): GtfsLookup = cache.get().value.lookup
+
+    /** Spaja routes.txt + trips.txt u GtfsLookup za RT mapper. */
+    private fun parseLookup(routes: List<RouteDto>, tripsTxt: String): GtfsLookup {
+        val headsignByTrip = CsvParser.parse(tripsTxt)
+            .mapNotNull { row ->
+                val tripId = row["trip_id"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                tripId to row["trip_headsign"].orEmpty()
+            }
+            .toMap()
+        return GtfsLookup(
+            modeByRoute = routes.associate { it.id to it.mode },
+            shortNameByRoute = routes.associate { it.id to it.shortName },
+            headsignByTrip = headsignByTrip,
         )
     }
 

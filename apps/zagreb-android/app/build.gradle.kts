@@ -19,12 +19,21 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Emulator → backend na host stroju (services/transit-api lokalno).
+            buildConfigField("String", "BACKEND_URL", "\"http://10.0.2.2:8080\"")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Produkcijski backend URL — override iz Gradle propertyja
+            // (-PbackendUrl=...) ili CI secreta; placeholder kao zadani.
+            val backendUrl = (project.findProperty("backendUrl") as String?)
+                ?: "https://api.zet-transit.example"
+            buildConfigField("String", "BACKEND_URL", "\"$backendUrl\"")
         }
     }
 
@@ -37,6 +46,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

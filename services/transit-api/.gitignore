@@ -5,3 +5,7 @@ build/
 local.properties
 .DS_Store
 *.hprof
+
+# Runtime token store (C4) — ne ide u repo
+fcm-tokens.txt
+fcm-tokens.txt.tmp

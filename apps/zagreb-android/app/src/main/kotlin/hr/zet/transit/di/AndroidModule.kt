@@ -1,5 +1,6 @@
 package hr.zet.transit.di
 
+import hr.zet.transit.BuildConfig
 import hr.zet.transit.data.local.DatabaseDriverFactory
 import hr.zet.transit.data.remote.TransitApiClient
 import hr.zet.transit.ui.alerts.AlertsViewModel
@@ -25,7 +26,8 @@ import org.koin.dsl.module
 val androidModule = module {
     single { DatabaseDriverFactory(androidContext()).create() }
 
-    single { TransitApiClient(baseUrl = ApiConfig.LOCAL) }
+    // Backend URL dolazi iz build configa (P4) — debug: lokalni, release: prod.
+    single { TransitApiClient(baseUrl = BuildConfig.BACKEND_URL) }
 
     single { LocationProvider(androidContext()) }
     single { PushTokenRegistrar(api = get()) }

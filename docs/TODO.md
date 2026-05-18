@@ -81,7 +81,7 @@ servis, credential ili konfiguraciju da bi *stvarno* radila.
 | P1 | **GraphHopper API ključ** | `Config.graphHopperApiKey` | Bez ključa `/v1/plan` vraća 503 — planiranje rute (A2.1) ne radi. Treba GraphHopper račun i ključ u env varijabli `GRAPHHOPPER_API_KEY`. |
 | P2 | **Firebase projekt (FCM)** | `NotificationService.sendArrivalReminder`, `PushTokenRegistrar` | Registracija tokena radi, ali slanje push poruka NE. Treba: Firebase projekt, `google-services.json`, Firebase Gradle plugin + `firebase-messaging` dependency, `FirebaseMessagingService`, Firebase Admin SDK na backendu. Plugin namjerno nije dodan jer bi bez `google-services.json` slomio build. |
 | P3 | **Map tile provider** | `MapLibreView.DEMO_STYLE_URL` | Karta koristi MapLibre demo stil. Za produkciju treba plaćeni tile provider (MapTiler / Stadia / self-hosted) i vlastiti stil pločica. Rizik R3 iz plana. |
-| P4 | **Produkcijski backend URL** | `ApiConfig.PRODUCTION` | Placeholder `https://api.zet-transit.example`. Klijent gađa `ApiConfig.LOCAL` (`10.0.2.2:8080` — emulator → host). Treba hostani backend (EU regija) i pravi URL. |
+| ~~P4~~ | ~~Produkcijski backend URL~~ | — | **RIJEŠENO.** Backend URL je sad u `BuildConfig.BACKEND_URL` — debug: `10.0.2.2:8080`, release: `-PbackendUrl=...` (CI secret). Ostaje samo nabaviti pravi URL kad backend bude hostan (P5). |
 | P5 | **Backend hosting** | — | `transit-api` nije nigdje deployan. Treba EU VPS / serverless (sekcija 14 plana), CD pipeline. |
 | P6 | **OSRM foot instanca** | `Config.osrmFootUrl` | Default je javni demo OSRM server — nije za produkcijski promet. Treba self-hosted OSRM `foot` ili plaćeni plan. |
 
@@ -92,8 +92,8 @@ servis, credential ili konfiguraciju da bi *stvarno* radila.
 | C1 | FCM slanje poruka | `NotificationService.sendArrivalReminder` | Skeleton — samo logira. Implementirati preko Firebase Admin SDK kad P2 bude riješen. |
 | C2 | RT→FCM pipeline | backend | A2.2 traži praćenje RT feeda po korisniku i slanje podsjetnika. Trenutno postoji samo registracija tokena. |
 | C3 | iOS implementacija | `apps/zagreb-ios/`, `GtfsZipReader.ios.kt`, `Time.ios.kt` | iOS UI je Faza C. `GtfsZipReader.ios` baca `NotImplementedError` — namjerno, dok se ne napiše native ZIP/SHA. |
-| C4 | FCM token store | `NotificationService` | Tokeni su in-memory — gube se pri restartu backenda. Treba perzistentna pohrana. |
-| C5 | `mode` heuristika u RT feedu | `GtfsRtMapper.inferMode` | Privremeno: tramvaj = broj linije ≤17. Zamijeniti lookupom u GTFS `routes.txt` (`route_type`). |
+| ~~C4~~ | ~~FCM token store~~ | — | **RIJEŠENO.** Tokeni se perzistiraju u datoteku (`fcm-tokens.txt`, atomarni write) i preživljavaju restart. Pri rastu zamijeniti pravom bazom. |
+| ~~C5~~ | ~~`mode` heuristika u RT feedu~~ | — | **RIJEŠENO.** `GtfsLookup` mapira `route_id` → mode/ime/headsign iz GTFS static; RT feed se time obogaćuje. Usput popravljeni i `routeShortName`/`headsign` placeholderi u dolascima. |
 | C6 | Smjer-strelice vozila | `VehicleLayer` | Vozila su krugovi (CircleLayer). Prava ikona vozila + rotacija po bearingu traži registriranu ikonu u stilu — dolazi uz P3. |
 | C7 | Design tokeni | `ui/theme/Theme.kt` | Placeholder paleta (ZET crvena). Pravi tokeni iz Figma design procesa (sekcija 6 plana). |
 
@@ -104,7 +104,7 @@ servis, credential ili konfiguraciju da bi *stvarno* radila.
 | L1 | Feed-validacija (bivši Spike) | 24h polling RT feeda, pregled GTFS ZIP-a, MapLibre fps test, procjena troška tilesa — Faza 0 zadatak iz plana, još nije odrađeno na stvarnom ZET feedu. |
 | L2 | Privacy policy | Prije launcha (GDPR, sekcija 10 plana). |
 | L3 | Crash reporting | Crashlytics ili Sentry — odlučiti i integrirati prije launcha. |
-| L4 | CI/CD | GitHub Actions za build/test/lint oba projekta + deploy. |
+| ~~L4~~ | ~~CI/CD~~ | **RIJEŠENO.** `.github/workflows/zet-app.yml` buildaj + testira backend i Android na svaki push/PR, uploada APK i test izvještaje. Deploy korak (CD) dolazi uz P5 (hosting). |
 | L5 | Play Console | Registracija developera (€25), interni track za beta. |
 | L6 | Beta-kohorta | 5–10 dnevnih putnika za A0 testiranje (DoD, sekcija 7 plana). |
 | L7 | Realan GTFS test | Aplikacija nije pokrenuta protiv stvarnog ZET feeda — backend treba pokrenuti i provjeriti parsiranje stvarnih podataka. |

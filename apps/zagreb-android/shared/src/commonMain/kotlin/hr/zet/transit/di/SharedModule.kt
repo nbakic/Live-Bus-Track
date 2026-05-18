@@ -51,15 +51,13 @@ val sharedModule = module {
 }
 
 /**
- * Konfiguracija backenda — base URL `transit-api`-ja po environmentu.
- * `transit-api` mora biti EU-hostan (sekcija 14 plana — regija backenda).
+ * Pomoćne funkcije za backend URL-ove.
+ *
+ * Bazni backend URL više nije ovdje konstanta — Android sloj ga daje iz
+ * build configa (`BuildConfig.BACKEND_URL`, P4): debug → lokalni backend,
+ * release → produkcijski. `transit-api` mora biti EU-hostan (sekcija 14 plana).
  */
 object ApiConfig {
-    /** Lokalni dev backend (services/transit-api na portu 8080). */
-    const val LOCAL = "http://10.0.2.2:8080"
-    /** Placeholder — produkcijski URL postavlja se u Fazi 0. */
-    const val PRODUCTION = "https://api.zet-transit.example"
-
     /** Backend ZIP proxy za GTFS static — `GtfsImporter` ga koristi. */
     fun gtfsStaticZipUrl(baseUrl: String): String = "$baseUrl/v1/gtfs/static.zip"
 }

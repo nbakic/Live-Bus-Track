@@ -51,8 +51,12 @@ fun Application.module() {
     }
 
     val zetHttpClient = HttpClient(CIO)
-    val rtFeed = GtfsRtFeedService(zetHttpClient)
+    // Static prvo — RT feed ga koristi za obogaćivanje (mode, ime, headsign — C5).
     val staticFeed = GtfsStaticFeedService(zetHttpClient)
+    val rtFeed = GtfsRtFeedService(
+        httpClient = zetHttpClient,
+        lookupProvider = { staticFeed.lookup() },
+    )
 
     // Zaseban klijent s JSON negotiationom — OSRM i GraphHopper vraćaju JSON
     // (ZET feedovi su protobuf/zip). Dijeli ga pješački i transit routing.

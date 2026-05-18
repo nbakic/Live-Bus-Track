@@ -8,6 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import hr.zet.transit.BuildConfig
 import hr.zet.transit.data.gtfs.GtfsImporter
 import hr.zet.transit.di.ApiConfig
 import org.koin.core.component.KoinComponent
@@ -29,7 +30,7 @@ class GtfsSyncWorker(
     private val importer: GtfsImporter by inject()
 
     override suspend fun doWork(): Result =
-        when (val outcome = importer.sync(ApiConfig.gtfsStaticZipUrl(ApiConfig.LOCAL))) {
+        when (val outcome = importer.sync(ApiConfig.gtfsStaticZipUrl(BuildConfig.BACKEND_URL))) {
             is GtfsImporter.Result.Imported -> Result.success()
             GtfsImporter.Result.UpToDate -> Result.success()
             // Greška: WorkManager pokuša ponovno; baza ostaje na zadnjem ZIP-u (R2).

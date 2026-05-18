@@ -22,6 +22,13 @@ import kotlin.test.assertTrue
  */
 class GtfsRtMapperTest {
 
+    /** Lookup s poznatim linijama 2 (tram) i 4 (bus) te tripom trip-7. */
+    private val lookup = GtfsLookup(
+        modeByRoute = mapOf("2" to "TRAM", "4" to "BUS"),
+        shortNameByRoute = mapOf("2" to "2", "4" to "4"),
+        headsignByTrip = mapOf("trip-7" to "Dubec"),
+    )
+
     @Test
     fun vehiclePosition_mapsCoreFields() {
         val vp = VehiclePosition.newBuilder()
@@ -36,11 +43,11 @@ class GtfsRtMapperTest {
             .setTimestamp(1_700_000_000L)
             .build()
 
-        val dto = vp.toDto()
+        val dto = vp.toDto(lookup)
 
         assertEquals("V123", dto.id)
         assertEquals("2", dto.routeId)
-        assertEquals("TRAM", dto.mode, "linija 2 je ≤17 → tramvaj")
+        assertEquals("TRAM", dto.mode, "linija 2 je tram u lookupu")
         assertEquals(90f, dto.bearing)
         assertEquals(1_700_000_000L, dto.timestamp)
     }
@@ -52,18 +59,20 @@ class GtfsRtMapperTest {
             .setPosition(Position.newBuilder().setLatitude(45.8f).setLongitude(16.0f))
             .build()
 
-        assertNull(vp.toDto().bearing)
+        assertNull(vp.toDto(lookup).bearing)
     }
 
     @Test
-    fun inferMode_busForHighRouteNumbers() {
-        assertEquals("BUS", inferMode("109"))
-        assertEquals("TRAM", inferMode("17"))
-        assertEquals("BUS", inferMode(null))
+    fun lookup_unknownRoute_fallsBackToBus() {
+        // Linija koje nema u lookupu — siguran default je BUS.
+        assertEquals("BUS", lookup.modeOf("999"))
+        assertEquals("BUS", lookup.modeOf(null))
+        // Nepoznata linija: shortName fallback je sam routeId.
+        assertEquals("999", lookup.shortNameOf("999"))
     }
 
     @Test
-    fun tripUpdate_filtersToRequestedStop() {
+    fun tripUpdate_filtersToRequestedStop_andEnrichesFromLookup() {
         val tu = TripUpdate.newBuilder()
             .setTrip(TripDescriptor.newBuilder().setRouteId("4").setTripId("trip-7"))
             .addStopTimeUpdate(
@@ -78,12 +87,17 @@ class GtfsRtMapperTest {
             )
             .build()
 
-        val arrivals = tu.toArrivalDtos("STOP_A")
+        val arrivals = tu.toArrivalDtos("STOP_A", lookup)
 
         assertEquals(1, arrivals.size, "samo dolazak za traženo stajalište")
-        assertEquals("4", arrivals.single().routeId)
-        assertEquals(60, arrivals.single().delaySeconds)
-        assertTrue(arrivals.single().isRealtime)
+        val arrival = arrivals.single()
+        assertEquals("4", arrival.routeId)
+        assertEquals(60, arrival.delaySeconds)
+        assertTrue(arrival.isRealtime)
+        // C5: ime i headsign dolaze iz lookupa, ne placeholderi.
+        assertEquals("4", arrival.routeShortName)
+        assertEquals("Dubec", arrival.headsign)
+        assertEquals("BUS", arrival.mode)
     }
 
     @Test

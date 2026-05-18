@@ -15,12 +15,12 @@ import hr.zet.transit.api.model.VehicleDto
  * polja se preskaču umjesto da ruše cijeli odgovor (R2 — GTFS rupe).
  */
 
-internal fun VehiclePosition.toDto(): VehicleDto {
+internal fun VehiclePosition.toDto(lookup: GtfsLookup): VehicleDto {
     val routeId = trip.routeId.takeIf { it.isNotEmpty() }
     return VehicleDto(
         id = vehicle.id.ifEmpty { vehicle.label },
         routeId = routeId,
-        mode = inferMode(routeId),
+        mode = lookup.modeOf(routeId),
         lat = position.latitude.toDouble(),
         lng = position.longitude.toDouble(),
         bearing = if (position.hasBearing()) position.bearing else null,
@@ -29,17 +29,18 @@ internal fun VehiclePosition.toDto(): VehicleDto {
 }
 
 /** Vraća dolaske iz TripUpdate-a, filtrirane na traženo stajalište. */
-internal fun TripUpdate.toArrivalDtos(stopId: String): List<ArrivalDto> {
+internal fun TripUpdate.toArrivalDtos(stopId: String, lookup: GtfsLookup): List<ArrivalDto> {
     val routeId = trip.routeId.takeIf { it.isNotEmpty() } ?: return emptyList()
+    val tripId = trip.tripId.takeIf { it.isNotEmpty() }
     return stopTimeUpdateList
         .filter { it.stopId == stopId && it.hasArrival() }
         .map { stu ->
             val delay = if (stu.arrival.hasDelay()) stu.arrival.delay else null
             ArrivalDto(
                 routeId = routeId,
-                routeShortName = routeId,   // razriješi punim imenom iz GTFS static
-                mode = inferMode(routeId),
-                headsign = trip.tripId,     // razriješi headsignom iz GTFS static
+                routeShortName = lookup.shortNameOf(routeId),
+                mode = lookup.modeOf(routeId),
+                headsign = lookup.headsignOf(tripId),
                 predictedTime = stu.arrival.time,
                 delaySeconds = delay,
                 isRealtime = true,
@@ -59,12 +60,3 @@ internal fun Alert.toDto(entityId: String): ServiceAlertDto = ServiceAlertDto(
     },
 )
 
-/**
- * ZET ne kodira mode u RT feedu izravno. Privremena heuristika: tramvajske
- * linije su 1–2-znamenkasti brojevi ≤ 17. Faza 0 zamjenjuje ovo lookupom
- * u GTFS static `routes.txt` (`route_type`: 0 = tram, 3 = bus).
- */
-internal fun inferMode(routeId: String?): String {
-    val num = routeId?.toIntOrNull() ?: return "BUS"
-    return if (num in 1..17) "TRAM" else "BUS"
-}

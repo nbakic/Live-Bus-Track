@@ -5,8 +5,10 @@ import hr.zet.transit.data.remote.TransitApiClient
 import hr.zet.transit.ui.alerts.AlertsViewModel
 import hr.zet.transit.ui.favorites.FavoritesViewModel
 import hr.zet.transit.ui.map.MapViewModel
+import hr.zet.transit.push.PushTokenRegistrar
 import hr.zet.transit.ui.nearby.LocationProvider
 import hr.zet.transit.ui.nearby.NearbyViewModel
+import hr.zet.transit.ui.plan.PlanViewModel
 import hr.zet.transit.ui.routes.RouteDetailViewModel
 import hr.zet.transit.ui.routes.RoutesViewModel
 import hr.zet.transit.ui.routines.RoutinesViewModel
@@ -26,6 +28,7 @@ val androidModule = module {
     single { TransitApiClient(baseUrl = ApiConfig.LOCAL) }
 
     single { LocationProvider(androidContext()) }
+    single { PushTokenRegistrar(api = get()) }
 
     viewModel { MapViewModel(observeVehicles = get(), staticRepository = get()) }
     viewModel {
@@ -43,5 +46,12 @@ val androidModule = module {
     viewModel { SearchViewModel(search = get()) }
     viewModel { AlertsViewModel(observeAlerts = get()) }
     viewModel { RoutinesViewModel(routineRepository = get(), observeArrivals = get()) }
-    viewModel { NearbyViewModel(getNearbyStops = get(), locationProvider = get()) }
+    viewModel { PlanViewModel(planJourney = get(), search = get()) }
+    viewModel {
+        NearbyViewModel(
+            getNearbyStops = get(),
+            staticRepository = get(),
+            locationProvider = get(),
+        )
+    }
 }

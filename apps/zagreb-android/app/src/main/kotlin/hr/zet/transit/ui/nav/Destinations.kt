@@ -26,6 +26,9 @@ object Destinations {
     /** Najbliža stajališta iz lokacije (A0.5). */
     const val NEARBY = "nearby"
 
+    /** Planiranje rute A→B (A2.1). */
+    const val PLAN = "plan"
+
     /** Stajalište-detalji (A0.2) — argument: stopId. */
     const val STOP_DETAIL = "stop/{stopId}"
 

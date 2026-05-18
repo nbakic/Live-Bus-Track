@@ -3,7 +3,12 @@ package hr.zet.transit.api
 import hr.zet.transit.api.cache.CachedValue
 import hr.zet.transit.api.feed.GtfsRtFeedService
 import hr.zet.transit.api.feed.GtfsStaticFeedService
+import hr.zet.transit.api.feed.JourneyPlanningService
+import hr.zet.transit.api.feed.WalkRoutingService
 import hr.zet.transit.api.model.FeedResponse
+import hr.zet.transit.api.notify.NotificationService
+import hr.zet.transit.api.notify.RegisterTokenRequest
+import io.ktor.server.request.receive
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
@@ -11,6 +16,7 @@ import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 
@@ -21,6 +27,9 @@ import io.ktor.server.routing.routing
 fun Application.configureRouting(
     rtFeed: GtfsRtFeedService,
     staticFeed: GtfsStaticFeedService,
+    walkRouting: WalkRoutingService,
+    journeyPlanning: JourneyPlanningService,
+    notifications: NotificationService,
 ) {
     routing {
         get("/health") {
@@ -85,6 +94,60 @@ fun Application.configureRouting(
                     contentType = ContentType.Application.Zip,
                 )
             }
+
+            // A1.6 — pješački routing (OSRM foot). Parametri: from, to "lat,lng".
+            get("/walk") {
+                val from = call.parameters["from"]?.let(::parseLatLng)
+                val to = call.parameters["to"]?.let(::parseLatLng)
+                if (from == null || to == null) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "from/to traže format 'lat,lng'"),
+                    )
+                    return@get
+                }
+                val route = walkRouting.walkRoute(
+                    fromLat = from.first, fromLng = from.second,
+                    toLat = to.first, toLng = to.second,
+                )
+                call.respond(route ?: HttpStatusCode.NotFound)
+            }
+
+            // A2.1 — planiranje rute A→B (GraphHopper pt). Parametri: from, to,
+            // departureTime (Unix sek, opcionalno — default sada).
+            get("/plan") {
+                val from = call.parameters["from"]?.let(::parseLatLng)
+                val to = call.parameters["to"]?.let(::parseLatLng)
+                if (from == null || to == null) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "from/to traže format 'lat,lng'"),
+                    )
+                    return@get
+                }
+                if (!journeyPlanning.isConfigured) {
+                    call.respond(
+                        HttpStatusCode.ServiceUnavailable,
+                        mapOf("error" to "Planiranje rute trenutno nije dostupno."),
+                    )
+                    return@get
+                }
+                val departure = call.parameters["departureTime"]?.toLongOrNull()
+                    ?: (System.currentTimeMillis() / 1000)
+                val plans = journeyPlanning.plan(
+                    fromLat = from.first, fromLng = from.second,
+                    toLat = to.first, toLng = to.second,
+                    departureEpochSeconds = departure,
+                )
+                call.respond(plans)
+            }
+
+            // A2.2 — registracija FCM tokena za push notifikacije.
+            post("/notifications/register") {
+                val request = call.receive<RegisterTokenRequest>()
+                notifications.registerToken(request.token)
+                call.respond(HttpStatusCode.NoContent)
+            }
         }
     }
 }
@@ -96,3 +159,12 @@ private fun <T> CachedValue<T>.toFeedResponse(): FeedResponse<T> =
         fetchedAt = fetchedAtEpochSeconds,
         live = true,
     )
+
+/** Parsira "lat,lng" query parametar; null pri neispravnom formatu. */
+private fun parseLatLng(raw: String): Pair<Double, Double>? {
+    val parts = raw.split(",")
+    if (parts.size != 2) return null
+    val lat = parts[0].trim().toDoubleOrNull() ?: return null
+    val lng = parts[1].trim().toDoubleOrNull() ?: return null
+    return lat to lng
+}

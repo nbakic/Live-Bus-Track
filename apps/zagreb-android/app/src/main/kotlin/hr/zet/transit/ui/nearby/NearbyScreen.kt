@@ -4,8 +4,10 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import hr.zet.transit.domain.model.Stop
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -86,21 +87,39 @@ fun NearbyScreen(
                     }
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize().padding(top = 8.dp)) {
-                        items(state.stops, key = Stop::id) { stop ->
-                            Text(
-                                text = stop.name,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onStopClick(stop.id) }
-                                    .padding(vertical = 14.dp),
-                            )
+                        items(state.stops, key = { it.stop.id }) { nearby ->
+                            NearbyRow(nearby, onClick = { onStopClick(nearby.stop.id) })
                             HorizontalDivider()
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NearbyRow(nearby: NearbyStop, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = nearby.stop.name,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(end = 12.dp),
+        )
+        // Pješačka udaljenost (A1.6); "—" kad routing nije uspio.
+        Text(
+            text = nearby.walkMinutes?.let { min ->
+                "${min} min hoda · ${nearby.walkMeters} m"
+            } ?: "—",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

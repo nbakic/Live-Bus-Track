@@ -4,6 +4,9 @@ import com.google.transit.realtime.GtfsRealtime.FeedHeader
 import com.google.transit.realtime.GtfsRealtime.FeedMessage
 import hr.zet.transit.api.feed.GtfsRtFeedService
 import hr.zet.transit.api.feed.GtfsStaticFeedService
+import hr.zet.transit.api.feed.JourneyPlanningService
+import hr.zet.transit.api.feed.WalkRoutingService
+import hr.zet.transit.api.notify.NotificationService
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.HttpClient
@@ -80,7 +83,13 @@ class V1ContractTest {
             }
         }
         val client = zetMockClient()
-        configureRouting(GtfsRtFeedService(client), GtfsStaticFeedService(client))
+        configureRouting(
+            GtfsRtFeedService(client),
+            GtfsStaticFeedService(client),
+            WalkRoutingService(client),
+            JourneyPlanningService(client),
+            NotificationService(),
+        )
     }
 
     @Test

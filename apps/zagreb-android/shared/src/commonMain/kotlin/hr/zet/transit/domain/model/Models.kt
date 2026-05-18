@@ -79,6 +79,43 @@ data class Routine(
 )
 
 /**
+ * Pješačka ruta (A1.6) — rezultat OSRM `foot` upita preko backenda.
+ * Koristi se za "najbliža stanica preko pješačkih putova" i crtanje puta.
+ */
+data class WalkRoute(
+    val distanceMeters: Double,
+    val durationSeconds: Double,
+    val geometry: List<LatLng>,
+)
+
+/** Tip dionice putovanja — pješačenje ili vožnja linijom. */
+enum class JourneyLegType {
+    WALK,
+    TRANSIT,
+}
+
+/** Jedna dionica plana putovanja (A2.1). */
+data class JourneyLeg(
+    val type: JourneyLegType,
+    val fromName: String,
+    val toName: String,
+    /** Unix sekunde. */
+    val departureTime: Long,
+    val arrivalTime: Long,
+    /** Oznaka i smjer linije — samo za TRANSIT dionice. */
+    val routeName: String?,
+    val headsign: String?,
+)
+
+/** Plan rute A→B (A2.1) — jedna ponuđena varijanta putovanja. */
+data class JourneyPlan(
+    val totalDurationSeconds: Long,
+    val departureTime: Long,
+    val arrivalTime: Long,
+    val legs: List<JourneyLeg>,
+)
+
+/**
  * Živa pozicija vozila iz GTFS-RT VehiclePosition.
  * RT je opcionalni sloj nad statičkim GTFS-om (Plan B za R1, sekcija 9).
  */

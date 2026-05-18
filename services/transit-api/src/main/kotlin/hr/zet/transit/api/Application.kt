@@ -2,9 +2,13 @@ package hr.zet.transit.api
 
 import hr.zet.transit.api.feed.GtfsRtFeedService
 import hr.zet.transit.api.feed.GtfsStaticFeedService
+import hr.zet.transit.api.feed.JourneyPlanningService
+import hr.zet.transit.api.feed.WalkRoutingService
 import hr.zet.transit.api.model.ErrorResponse
+import hr.zet.transit.api.notify.NotificationService
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -50,6 +54,17 @@ fun Application.module() {
     val rtFeed = GtfsRtFeedService(zetHttpClient)
     val staticFeed = GtfsStaticFeedService(zetHttpClient)
 
-    configureRouting(rtFeed, staticFeed)
+    // Zaseban klijent s JSON negotiationom — OSRM i GraphHopper vraćaju JSON
+    // (ZET feedovi su protobuf/zip). Dijeli ga pješački i transit routing.
+    val jsonHttpClient = HttpClient(CIO) {
+        install(ClientContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
+    }
+    val walkRouting = WalkRoutingService(jsonHttpClient)
+    val journeyPlanning = JourneyPlanningService(jsonHttpClient)
+    val notifications = NotificationService()
+
+    configureRouting(rtFeed, staticFeed, walkRouting, journeyPlanning, notifications)
     log.info("transit-api pokrenut na portu ${Config.port}")
 }

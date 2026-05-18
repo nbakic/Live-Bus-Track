@@ -11,6 +11,7 @@ import hr.zet.transit.domain.model.RouteSchedule
 import hr.zet.transit.domain.model.RouteShape
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.TransitMode
+import hr.zet.transit.domain.model.WalkRoute
 import hr.zet.transit.domain.repository.StaticRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -86,6 +87,23 @@ class StaticRepositoryImpl(
                 },
             )
         }
+
+    override suspend fun getWalkRoute(
+        fromLat: Double,
+        fromLng: Double,
+        toLat: Double,
+        toLng: Double,
+    ): WalkRoute? = withContext(ioDispatcher) {
+        // Pješački routing radi backend (OSRM foot); mreža može pasti.
+        val dto = runCatching {
+            api.getWalkRoute(fromLat, fromLng, toLat, toLng)
+        }.getOrNull() ?: return@withContext null
+        WalkRoute(
+            distanceMeters = dto.distanceMeters,
+            durationSeconds = dto.durationSeconds,
+            geometry = dto.geometry.map { LatLng(it.lat, it.lng) },
+        )
+    }
 
     private companion object {
         const val METERS_PER_DEGREE_LAT = 111_320.0

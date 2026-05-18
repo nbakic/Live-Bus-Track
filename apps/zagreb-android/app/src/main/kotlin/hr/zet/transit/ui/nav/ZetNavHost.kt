@@ -12,6 +12,7 @@ import hr.zet.transit.ui.alerts.AlertsScreen
 import hr.zet.transit.ui.favorites.FavoritesScreen
 import hr.zet.transit.ui.map.MapScreen
 import hr.zet.transit.ui.nearby.NearbyScreen
+import hr.zet.transit.ui.plan.PlanScreen
 import hr.zet.transit.ui.routes.RouteDetailScreen
 import hr.zet.transit.ui.routes.RoutesScreen
 import hr.zet.transit.ui.routines.RoutinesScreen
@@ -40,6 +41,7 @@ fun ZetNavHost(modifier: Modifier = Modifier) {
                 onAlertsClick = { navController.navigate(Destinations.ALERTS) },
                 onRoutinesClick = { navController.navigate(Destinations.ROUTINES) },
                 onNearbyClick = { navController.navigate(Destinations.NEARBY) },
+                onPlanClick = { navController.navigate(Destinations.PLAN) },
             )
         }
 
@@ -90,6 +92,10 @@ fun ZetNavHost(modifier: Modifier = Modifier) {
 
         composable(Destinations.NEARBY) {
             NearbyScreen(onStopClick = { navController.navigateToStop(it) })
+        }
+
+        composable(Destinations.PLAN) {
+            PlanScreen()
         }
     }
 }

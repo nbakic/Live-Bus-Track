@@ -63,6 +63,38 @@ data class DirectionScheduleDto(
     val departures: List<String>,
 )
 
+@Serializable
+data class WalkRouteDto(
+    val distanceMeters: Double,
+    val durationSeconds: Double,
+    val geometry: List<LatLngDto>,
+)
+
+@Serializable
+data class JourneyPlanDto(
+    val totalDurationSeconds: Long,
+    val departureTime: Long,
+    val arrivalTime: Long,
+    val legs: List<JourneyLegDto>,
+)
+
+@Serializable
+data class JourneyLegDto(
+    val type: String,
+    val fromName: String,
+    val toName: String,
+    val departureTime: Long,
+    val arrivalTime: Long,
+    val routeName: String? = null,
+    val headsign: String? = null,
+)
+
+/** Tijelo zahtjeva za /v1/notifications/register. */
+@Serializable
+data class RegisterTokenRequest(
+    val token: String,
+)
+
 /** Omotač odgovora — backend dodaje meta polja (svježina, izvor). */
 @Serializable
 data class FeedResponse<T>(

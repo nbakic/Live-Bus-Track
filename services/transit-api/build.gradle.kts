@@ -25,9 +25,10 @@ dependencies {
     implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
-    // Ktor klijent — backend dohvaća ZET feedove
+    // Ktor klijent — backend dohvaća ZET feedove, OSRM i GraphHopper
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 
     // GTFS-RT protobuf — backend parsira protobuf, klijent dobiva JSON
     implementation("org.mobilitydata:gtfs-realtime-bindings:0.0.8")

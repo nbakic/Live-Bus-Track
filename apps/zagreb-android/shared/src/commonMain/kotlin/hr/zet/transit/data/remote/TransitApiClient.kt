@@ -2,15 +2,23 @@ package hr.zet.transit.data.remote
 
 import hr.zet.transit.data.remote.dto.ArrivalDto
 import hr.zet.transit.data.remote.dto.FeedResponse
+import hr.zet.transit.data.remote.dto.JourneyPlanDto
+import hr.zet.transit.data.remote.dto.RegisterTokenRequest
 import hr.zet.transit.data.remote.dto.RouteScheduleDto
 import hr.zet.transit.data.remote.dto.RouteShapeDto
 import hr.zet.transit.data.remote.dto.ServiceAlertDto
 import hr.zet.transit.data.remote.dto.VehicleDto
+import hr.zet.transit.data.remote.dto.WalkRouteDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.appendPathSegments
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -53,6 +61,39 @@ class TransitApiClient(
         httpClient.get(baseUrl) {
             url { appendPathSegments(API_VERSION, "routes", routeId, "schedule") }
         }.body()
+
+    /** A1.6 — pješačka ruta od izvora do odredišta (OSRM foot na backendu). */
+    suspend fun getWalkRoute(
+        fromLat: Double,
+        fromLng: Double,
+        toLat: Double,
+        toLng: Double,
+    ): WalkRouteDto = httpClient.get(baseUrl) {
+        url { appendPathSegments(API_VERSION, "walk") }
+        parameter("from", "$fromLat,$fromLng")
+        parameter("to", "$toLat,$toLng")
+    }.body()
+
+    /** A2.1 — planiranje rute A→B (GraphHopper pt na backendu). */
+    suspend fun getJourneyPlans(
+        fromLat: Double,
+        fromLng: Double,
+        toLat: Double,
+        toLng: Double,
+    ): List<JourneyPlanDto> = httpClient.get(baseUrl) {
+        url { appendPathSegments(API_VERSION, "plan") }
+        parameter("from", "$fromLat,$fromLng")
+        parameter("to", "$toLat,$toLng")
+    }.body()
+
+    /** A2.2 — registrira FCM token uređaja za push notifikacije. */
+    suspend fun registerNotificationToken(token: String) {
+        httpClient.post(baseUrl) {
+            url { appendPathSegments(API_VERSION, "notifications", "register") }
+            contentType(ContentType.Application.Json)
+            setBody(RegisterTokenRequest(token))
+        }
+    }
 
     companion object {
         const val API_VERSION = "v1"

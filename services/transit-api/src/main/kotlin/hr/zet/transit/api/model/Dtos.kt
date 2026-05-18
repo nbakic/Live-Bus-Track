@@ -85,6 +85,44 @@ data class DirectionScheduleDto(
     val departures: List<String>,
 )
 
+/**
+ * Pješačka ruta (A1.6) — rezultat OSRM `foot` upita.
+ * `geometry` su točke pješačkog puta za crtanje na karti.
+ */
+@Serializable
+data class WalkRouteDto(
+    val distanceMeters: Double,
+    val durationSeconds: Double,
+    val geometry: List<LatLngDto>,
+)
+
+/**
+ * Plan rute A→B (A2.1) — jedna ponuđena varijanta putovanja.
+ * Sastoji se od dionica: pješačenje ili vožnja linijom.
+ */
+@Serializable
+data class JourneyPlanDto(
+    val totalDurationSeconds: Long,
+    /** Unix sekunde — vrijeme polaska/dolaska cijelog putovanja. */
+    val departureTime: Long,
+    val arrivalTime: Long,
+    val legs: List<JourneyLegDto>,
+)
+
+@Serializable
+data class JourneyLegDto(
+    /** "WALK" ili "TRANSIT". */
+    val type: String,
+    val fromName: String,
+    val toName: String,
+    val departureTime: Long,
+    val arrivalTime: Long,
+    /** Oznaka linije — samo za TRANSIT dionice. */
+    val routeName: String? = null,
+    /** Smjer/odredište linije — samo za TRANSIT dionice. */
+    val headsign: String? = null,
+)
+
 @Serializable
 data class FeedResponse<T>(
     val data: T,

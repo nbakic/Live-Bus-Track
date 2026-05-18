@@ -39,6 +39,7 @@ fun MapScreen(
     onAlertsClick: () -> Unit,
     onRoutinesClick: () -> Unit,
     onNearbyClick: () -> Unit,
+    onPlanClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = koinViewModel(),
 ) {
@@ -93,14 +94,17 @@ fun MapScreen(
                 .padding(16.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MapAction("Ruta", onPlanClick)
                 MapAction("Traži", onSearchClick)
                 MapAction("U blizini", onNearbyClick)
-                MapAction("Rutine", onRoutinesClick)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MapAction("Rutine", onRoutinesClick)
                 MapAction("Omiljeni", onFavoritesClick)
-                MapAction("Obavijesti", onAlertsClick)
                 MapAction("Linije", onRoutesClick)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MapAction("Obavijesti", onAlertsClick)
             }
         }
     }

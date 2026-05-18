@@ -1,6 +1,7 @@
 package hr.zet.transit.domain.repository
 
 import hr.zet.transit.domain.model.Arrival
+import hr.zet.transit.domain.model.JourneyPlan
 import hr.zet.transit.domain.model.Route
 import hr.zet.transit.domain.model.RouteSchedule
 import hr.zet.transit.domain.model.RouteShape
@@ -9,6 +10,7 @@ import hr.zet.transit.domain.model.RoutineKind
 import hr.zet.transit.domain.model.ServiceAlert
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.Vehicle
+import hr.zet.transit.domain.model.WalkRoute
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -35,6 +37,14 @@ interface StaticRepository {
 
     /** Kompletan statički vozni red linije (A1.4); null ako ga nema. */
     suspend fun getRouteSchedule(routeId: String): RouteSchedule?
+
+    /** Pješačka ruta od točke do točke (A1.6); null ako put nije nađen. */
+    suspend fun getWalkRoute(
+        fromLat: Double,
+        fromLng: Double,
+        toLat: Double,
+        toLng: Double,
+    ): WalkRoute?
 }
 
 /**
@@ -65,4 +75,19 @@ interface RoutineRepository {
     fun observeRoutines(): Flow<List<Routine>>
     suspend fun setRoutine(routine: Routine)
     suspend fun clearRoutine(kind: RoutineKind)
+}
+
+/** Planiranje rute A→B (A2.1) — backend GraphHopper pt. */
+interface JourneyRepository {
+    /**
+     * Ponuđene varijante putovanja od izvora do odredišta.
+     * @return lista planova; prazna ako ruta nije nađena ili je planiranje
+     *   nedostupno (GraphHopper nije konfiguriran).
+     */
+    suspend fun planJourney(
+        fromLat: Double,
+        fromLng: Double,
+        toLat: Double,
+        toLng: Double,
+    ): List<JourneyPlan>
 }

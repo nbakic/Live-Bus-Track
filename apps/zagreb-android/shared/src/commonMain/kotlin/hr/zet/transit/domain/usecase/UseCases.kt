@@ -1,10 +1,12 @@
 package hr.zet.transit.domain.usecase
 
 import hr.zet.transit.domain.model.Arrival
+import hr.zet.transit.domain.model.JourneyPlan
 import hr.zet.transit.domain.model.ServiceAlert
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.Vehicle
 import hr.zet.transit.domain.repository.FavoritesRepository
+import hr.zet.transit.domain.repository.JourneyRepository
 import hr.zet.transit.domain.repository.RealtimeRepository
 import hr.zet.transit.domain.repository.StaticRepository
 import kotlinx.coroutines.flow.Flow
@@ -67,4 +69,16 @@ class ToggleFavoriteUseCase(
             favorites.addFavorite(stopId)
         }
     }
+}
+
+/** A2.1 — planiranje rute A→B (transit routing). */
+class PlanJourneyUseCase(
+    private val journeys: JourneyRepository,
+) {
+    suspend operator fun invoke(
+        fromLat: Double,
+        fromLng: Double,
+        toLat: Double,
+        toLng: Double,
+    ): List<JourneyPlan> = journeys.planJourney(fromLat, fromLng, toLat, toLng)
 }

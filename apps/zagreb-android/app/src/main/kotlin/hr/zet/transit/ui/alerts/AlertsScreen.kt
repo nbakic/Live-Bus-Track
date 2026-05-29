@@ -49,6 +49,17 @@ fun AlertsScreen(
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
 
+            !state.isLive && state.alerts.isEmpty() -> Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Nije moguće dohvatiti obavijesti — provjeri vezu.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
             state.alerts.isEmpty() -> Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,

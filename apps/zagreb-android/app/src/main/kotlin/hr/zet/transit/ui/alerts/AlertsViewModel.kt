@@ -25,9 +25,10 @@ class AlertsViewModel(
 
     init {
         viewModelScope.launch {
-            observeAlerts().collect { alerts ->
+            observeAlerts().collect { feed ->
                 _uiState.value = AlertsUiState(
-                    alerts = alerts.sortedByDescending { it.severity.ordinal },
+                    alerts = feed.data.sortedByDescending { it.severity.ordinal },
+                    isLive = feed.isLive,
                     isLoading = false,
                 )
             }
@@ -39,4 +40,6 @@ class AlertsViewModel(
 data class AlertsUiState(
     val alerts: List<ServiceAlert> = emptyList(),
     val isLoading: Boolean = true,
+    /** False kad backend ne odgovara — UI prikazuje degradiranu poruku. */
+    val isLive: Boolean = true,
 )

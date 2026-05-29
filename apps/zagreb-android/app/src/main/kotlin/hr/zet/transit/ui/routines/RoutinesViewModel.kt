@@ -56,10 +56,10 @@ class RoutinesViewModel(
         // Pokreni collectore za nove rutine.
         routines.filter { it.kind !in arrivalJobs }.forEach { routine ->
             arrivalJobs[routine.kind] = viewModelScope.launch {
-                observeArrivals(routine.stopId).collect { arrivals ->
+                observeArrivals(routine.stopId).collect { feed ->
                     _uiState.value = _uiState.value.copy(
                         arrivalsByKind = _uiState.value.arrivalsByKind +
-                            (routine.kind to arrivals.sortedBy { it.predictedTime }.take(3)),
+                            (routine.kind to feed.data.sortedBy { it.predictedTime }.take(3)),
                     )
                 }
             }

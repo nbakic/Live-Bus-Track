@@ -64,7 +64,8 @@ fun MapLibreView(
         modifier = modifier,
         update = { view ->
             view.getMapAsync { map ->
-                map.setStyle(DEMO_STYLE_URL) { style ->
+                val styleSpec = Style.Builder().fromJson(OSM_RASTER_STYLE)
+                map.setStyle(styleSpec) { style ->
                     map.cameraPosition = CameraPosition.Builder()
                         .target(LatLng(ZAGREB_LAT, ZAGREB_LNG))
                         .zoom(ZAGREB_DEFAULT_ZOOM)
@@ -81,5 +82,26 @@ private const val ZAGREB_LAT = 45.8131
 private const val ZAGREB_LNG = 15.9775
 private const val ZAGREB_DEFAULT_ZOOM = 12.5
 
-/** Privremeni demo stil; zamjenjuje se vlastitim tile stilom u Fazi 0 (R3). */
-private const val DEMO_STYLE_URL = "https://demotiles.maplibre.org/style.json"
+/**
+ * Privremeni stil za dev — OSM raster tiles. Vidi se prava karta Zagreba,
+ * ali OSM ToS zabranjuje bulk korištenje u produkciji. Za launch treba
+ * pravi tile provider (MapTiler / Stadia / self-hosted) — P3 iz TODO.md.
+ */
+private const val OSM_RASTER_STYLE = """
+{
+  "version": 8,
+  "sources": {
+    "osm": {
+      "type": "raster",
+      "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      "tileSize": 256,
+      "attribution": "© OpenStreetMap contributors"
+    }
+  },
+  "layers": [
+    {"id": "osm-tiles", "type": "raster", "source": "osm"}
+  ]
+}
+"""

@@ -47,7 +47,10 @@ class GtfsStaticFeedService(
         val zipBytes = httpClient.get(Config.zetGtfsStaticUrl).readBytes()
         val files = readZipEntries(
             zipBytes,
-            setOf("routes.txt", "stops.txt", "shapes.txt", "trips.txt", "stop_times.txt"),
+            // stop_times.txt (≈120 MB raspakirano) NE učitavamo u memoriju —
+            // streamamo ga zasebno; inače CsvParser materijalizira milijune
+            // Map redova po datoteci i ruši JVM (OOM).
+            setOf("routes.txt", "stops.txt", "shapes.txt", "trips.txt"),
         )
         val routes = parseRoutes(files["routes.txt"].orEmpty())
         return StaticData(
@@ -60,7 +63,7 @@ class GtfsStaticFeedService(
             ),
             schedulesByRoute = parseSchedulesByRoute(
                 tripsTxt = files["trips.txt"].orEmpty(),
-                stopTimesTxt = files["stop_times.txt"].orEmpty(),
+                tripDeparture = streamTripDepartures(zipBytes),
             ),
             lookup = parseLookup(
                 routes = routes,
@@ -115,6 +118,75 @@ class GtfsStaticFeedService(
             }
         }
         return result
+    }
+
+    /**
+     * Streamira `stop_times.txt` (≈120 MB raspakirano) red po red i vadi samo
+     * polazno vrijeme s prvog stajališta (najmanji `stop_sequence`) po tripu.
+     *
+     * Cijela datoteka se NIKAD ne drži u memoriji — ni kao String ni kao
+     * parsirani redovi. Zadržava se samo trip_id → (min seq, vrijeme), reda
+     * veličine MB. (`CsvParser.parse` na cijeloj datoteci gradi milijune
+     * Map-ova i ruši JVM — OOM na ovom feedu.)
+     */
+    private fun streamTripDepartures(zipBytes: ByteArray): Map<String, String> {
+        val best = HashMap<String, Pair<Int, String>>()
+        ZipInputStream(zipBytes.inputStream()).use { zip ->
+            var entry = zip.nextEntry
+            while (entry != null) {
+                if (entry.name == "stop_times.txt") {
+                    // Reader NE zatvaramo — zatvorio bi cijeli ZipInputStream.
+                    val reader = zip.bufferedReader()
+                    val header = reader.readLine()?.removePrefix("﻿")?.let(::splitCsvLine)
+                    if (header != null) {
+                        val tripIdx = header.indexOf("trip_id")
+                        val seqIdx = header.indexOf("stop_sequence")
+                        val depIdx = header.indexOf("departure_time")
+                        if (tripIdx >= 0 && seqIdx >= 0 && depIdx >= 0) {
+                            val maxIdx = maxOf(tripIdx, seqIdx, depIdx)
+                            var line = reader.readLine()
+                            while (line != null) {
+                                val cols = splitCsvLine(line)
+                                if (cols.size > maxIdx) {
+                                    val tripId = cols[tripIdx]
+                                    val seq = cols[seqIdx].toIntOrNull()
+                                    val dep = cols[depIdx]
+                                    if (tripId.isNotEmpty() && dep.isNotEmpty() && seq != null) {
+                                        val cur = best[tripId]
+                                        if (cur == null || seq < cur.first) best[tripId] = seq to dep
+                                    }
+                                }
+                                line = reader.readLine()
+                            }
+                        }
+                    }
+                    break
+                }
+                zip.closeEntry()
+                entry = zip.nextEntry
+            }
+        }
+        return best.mapValues { it.value.second }
+    }
+
+    /** Jednoredni RFC 4180 split (quoted polja smiju sadržavati zareze); trimano. */
+    private fun splitCsvLine(line: String): List<String> {
+        val out = ArrayList<String>()
+        val field = StringBuilder()
+        var inQuotes = false
+        var i = 0
+        while (i < line.length) {
+            val c = line[i]
+            when {
+                inQuotes && c == '"' && line.getOrNull(i + 1) == '"' -> { field.append('"'); i++ }
+                c == '"' -> inQuotes = !inQuotes
+                !inQuotes && c == ',' -> { out.add(field.toString().trim()); field.setLength(0) }
+                else -> field.append(c)
+            }
+            i++
+        }
+        out.add(field.toString().trim())
+        return out
     }
 
     /** `route_type`: 0 = tram, 3 = bus (GTFS spec). Defenzivno (R2). */
@@ -187,7 +259,7 @@ class GtfsStaticFeedService(
      */
     private fun parseSchedulesByRoute(
         tripsTxt: String,
-        stopTimesTxt: String,
+        tripDeparture: Map<String, String>,
     ): Map<String, RouteScheduleDto> {
         // trip_id → (route_id, headsign)
         val tripInfo: Map<String, Pair<String, String>> = CsvParser.parse(tripsTxt)
@@ -197,17 +269,6 @@ class GtfsStaticFeedService(
                 tripId to (routeId to row["trip_headsign"].orEmpty())
             }
             .toMap()
-
-        // trip_id → polazno vrijeme (najmanji stop_sequence)
-        val tripDeparture: Map<String, String> = CsvParser.parse(stopTimesTxt)
-            .mapNotNull { row ->
-                val tripId = row["trip_id"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
-                val seq = row["stop_sequence"]?.toIntOrNull() ?: return@mapNotNull null
-                val time = row["departure_time"]?.takeIf(String::isNotBlank) ?: return@mapNotNull null
-                Triple(tripId, seq, time)
-            }
-            .groupBy { it.first }
-            .mapValues { (_, rows) -> rows.minBy { it.second }.third }
 
         // (routeId, headsign) → sortirana lista polazaka
         return tripDeparture.entries

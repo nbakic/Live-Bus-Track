@@ -65,7 +65,7 @@ class NextArrivalWidget : AppWidgetProvider(), KoinComponent {
         }
 
         val stopName = staticRepository.getStop(favoriteStopId)?.name ?: favoriteStopId
-        val arrivals = observeArrivals(favoriteStopId).first()
+        val arrivals = observeArrivals(favoriteStopId).first().data
         val next = arrivals.minByOrNull { it.predictedTime }
 
         views.setTextViewText(R.id.widget_stop_name, stopName)

@@ -44,9 +44,10 @@ class StopDetailViewModel(
             _uiState.value = _uiState.value.copy(stopName = stopName)
         }
         viewModelScope.launch {
-            observeArrivals(stopId).collect { arrivals ->
+            observeArrivals(stopId).collect { feed ->
                 _uiState.value = _uiState.value.copy(
-                    arrivals = arrivals.sortedBy { it.predictedTime },
+                    arrivals = feed.data.sortedBy { it.predictedTime },
+                    isLive = feed.isLive,
                     isLoading = false,
                 )
             }
@@ -81,4 +82,6 @@ data class StopDetailUiState(
     val arrivals: List<Arrival> = emptyList(),
     val isFavorite: Boolean = false,
     val isLoading: Boolean = true,
+    /** False kad backend ne odgovara — UI prikazuje degradiranu poruku. */
+    val isLive: Boolean = true,
 )

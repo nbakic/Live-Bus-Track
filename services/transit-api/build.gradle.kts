@@ -43,6 +43,10 @@ dependencies {
 
 application {
     mainClass.set("hr.zet.transit.api.ApplicationKt")
+    // Explicit heap cap for the forked run JVM. GtfsStaticFeedService streams
+    // the ~120 MB stop_times.txt rather than buffering it, so peak usage is
+    // modest; this just keeps a predictable ceiling on low-RAM dev machines.
+    applicationDefaultJvmArgs = listOf("-Xmx1536m")
 }
 
 kotlin {

@@ -1,6 +1,7 @@
 package hr.zet.transit.di
 
 import hr.zet.transit.BuildConfig
+import hr.zet.transit.data.ConnectivityChecker
 import hr.zet.transit.data.local.DatabaseDriverFactory
 import hr.zet.transit.data.remote.TransitApiClient
 import hr.zet.transit.ui.alerts.AlertsViewModel
@@ -30,6 +31,7 @@ val androidModule = module {
     single { TransitApiClient(baseUrl = BuildConfig.BACKEND_URL) }
 
     single { LocationProvider(androidContext()) }
+    single { ConnectivityChecker(androidContext()) }
     single { PushTokenRegistrar(api = get()) }
 
     viewModel { MapViewModel(observeVehicles = get(), staticRepository = get()) }
@@ -42,7 +44,14 @@ val androidModule = module {
             routineRepository = get(),
         )
     }
-    viewModel { RoutesViewModel(staticRepository = get()) }
+    viewModel {
+        RoutesViewModel(
+            staticRepository = get(),
+            importer = get(),
+            connectivity = get(),
+            gtfsZipUrl = ApiConfig.gtfsStaticZipUrl(BuildConfig.BACKEND_URL),
+        )
+    }
     viewModel { RouteDetailViewModel(staticRepository = get()) }
     viewModel { FavoritesViewModel(favoritesRepository = get(), staticRepository = get()) }
     viewModel { SearchViewModel(search = get()) }

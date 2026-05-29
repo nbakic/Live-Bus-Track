@@ -8,6 +8,7 @@ import hr.zet.transit.domain.model.Arrival
 import hr.zet.transit.domain.model.AlertSeverity
 import hr.zet.transit.domain.model.Heading
 import hr.zet.transit.domain.model.LatLng
+import hr.zet.transit.domain.model.RealtimeFeed
 import hr.zet.transit.domain.model.Route
 import hr.zet.transit.domain.model.ServiceAlert
 import hr.zet.transit.domain.model.TransitMode
@@ -28,26 +29,34 @@ class RealtimeRepositoryImpl(
     private val api: TransitApiClient,
 ) : RealtimeRepository {
 
-    override fun observeVehicles(): Flow<List<Vehicle>> =
+    override fun observeVehicles(): Flow<RealtimeFeed<Vehicle>> =
         pollingFlow { api.getVehicles().data.map { it.toDomain() } }
 
-    override fun observeArrivals(stopId: String): Flow<List<Arrival>> =
+    override fun observeArrivals(stopId: String): Flow<RealtimeFeed<Arrival>> =
         pollingFlow { api.getArrivals(stopId).data.map { it.toDomain() } }
 
-    override fun observeAlerts(): Flow<List<ServiceAlert>> =
+    override fun observeAlerts(): Flow<RealtimeFeed<ServiceAlert>> =
         pollingFlow { api.getAlerts().data.map { it.toDomain() } }
 
-    /** Generički polling s exponential backoffom na greške. */
-    private fun <T> pollingFlow(fetch: suspend () -> T): Flow<T> = flow {
+    /**
+     * Generički polling s exponential backoffom. Emita uvijek — i pri grešci
+     * šalje prethodni snapshot s `isLive=false` (ili praznu listu pri prvom
+     * padu) da UI može pokazati degradirano stanje umjesto da viseći čeka.
+     */
+    private fun <T> pollingFlow(fetch: suspend () -> List<T>): Flow<RealtimeFeed<T>> = flow {
         var backoffMs = PollConfig.MIN_BACKOFF_MS
+        var lastData: List<T> = emptyList()
         while (true) {
             try {
-                emit(fetch())
+                val data = fetch()
+                lastData = data
+                emit(RealtimeFeed(data = data, isLive = true))
                 backoffMs = PollConfig.MIN_BACKOFF_MS
                 delay(PollConfig.DEFAULT_INTERVAL_MS)
             } catch (e: Exception) {
-                // R1 graceful degradation: greška ne ruši Flow; backend
-                // ionako servira cached/statički fallback kad RT padne.
+                // R1 graceful degradation: greška ne ruši Flow. UI vidi
+                // `isLive=false` i pokazuje "podaci uživo nedostupni".
+                emit(RealtimeFeed(data = lastData, isLive = false))
                 delay(backoffMs)
                 backoffMs = (backoffMs * 2).coerceAtMost(PollConfig.MAX_BACKOFF_MS)
             }

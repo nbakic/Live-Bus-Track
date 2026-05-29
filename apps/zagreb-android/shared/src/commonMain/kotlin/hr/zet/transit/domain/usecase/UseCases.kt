@@ -2,6 +2,7 @@ package hr.zet.transit.domain.usecase
 
 import hr.zet.transit.domain.model.Arrival
 import hr.zet.transit.domain.model.JourneyPlan
+import hr.zet.transit.domain.model.RealtimeFeed
 import hr.zet.transit.domain.model.ServiceAlert
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.Vehicle
@@ -22,14 +23,14 @@ import kotlinx.coroutines.flow.Flow
 class ObserveVehiclesUseCase(
     private val realtime: RealtimeRepository,
 ) {
-    operator fun invoke(): Flow<List<Vehicle>> = realtime.observeVehicles()
+    operator fun invoke(): Flow<RealtimeFeed<Vehicle>> = realtime.observeVehicles()
 }
 
 /** A0.2 — dolasci na stajalište (RT predikcije ili statički fallback). */
 class ObserveArrivalsUseCase(
     private val realtime: RealtimeRepository,
 ) {
-    operator fun invoke(stopId: String): Flow<List<Arrival>> =
+    operator fun invoke(stopId: String): Flow<RealtimeFeed<Arrival>> =
         realtime.observeArrivals(stopId)
 }
 
@@ -37,7 +38,7 @@ class ObserveArrivalsUseCase(
 class ObserveAlertsUseCase(
     private val realtime: RealtimeRepository,
 ) {
-    operator fun invoke(): Flow<List<ServiceAlert>> = realtime.observeAlerts()
+    operator fun invoke(): Flow<RealtimeFeed<ServiceAlert>> = realtime.observeAlerts()
 }
 
 /**

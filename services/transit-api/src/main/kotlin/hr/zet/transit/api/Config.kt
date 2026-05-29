@@ -9,11 +9,11 @@ package hr.zet.transit.api
 object Config {
     /** GTFS-RT protobuf feed — žive pozicije, kašnjenja, alerts. */
     val zetGtfsRtUrl: String =
-        env("ZET_GTFS_RT_URL", "https://zet.hr/gtfs2/gtfs-rt-protobuf")
+        env("ZET_GTFS_RT_URL", "https://www.zet.hr/gtfs-rt-protobuf")
 
     /** GTFS static ZIP — linije, stajališta, redovi vožnje. */
     val zetGtfsStaticUrl: String =
-        env("ZET_GTFS_STATIC_URL", "https://zet.hr/gtfs2/gtfs-scheduled/latest")
+        env("ZET_GTFS_STATIC_URL", "https://www.zet.hr/gtfs-scheduled/latest")
 
     /** Pass-through cache TTL za RT feed (sekunde) — sekcija 5 plana: ~10 s. */
     val rtCacheTtlSeconds: Long = env("RT_CACHE_TTL", "10").toLong()

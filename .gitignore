@@ -57,3 +57,9 @@ Thumbs.db
 # Vercel serverless build artifacts (not api/index.ts source)
 /api/*.mjs
 /api/*.map
+
+# Local dev screenshots / scratch artifacts
+screenshot*.png
+
+# Kotlin build cache
+apps/zagreb-android/.kotlin/

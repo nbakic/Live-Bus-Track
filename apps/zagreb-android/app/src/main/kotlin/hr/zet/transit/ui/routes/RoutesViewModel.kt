@@ -2,9 +2,13 @@ package hr.zet.transit.ui.routes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import hr.zet.transit.data.ConnectivityChecker
+import hr.zet.transit.data.gtfs.GtfsImporter
 import hr.zet.transit.domain.model.Route
 import hr.zet.transit.domain.model.TransitMode
 import hr.zet.transit.domain.repository.StaticRepository
+import hr.zet.transit.ui.common.LoadError
+import hr.zet.transit.ui.common.classifyLoadError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,11 +17,16 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel za pregled svih linija (A1.1).
  *
- * Linije se učitavaju jednom iz statičke baze i sortiraju: tramvaji prije
- * autobusa, unutar grupe numerički po oznaci linije.
+ * Linije žive u lokalnoj bazi koju puni GTFS sync. Ako je baza prazna (npr.
+ * prvi start prije nego je periodični sync stigao odraditi), pokušamo
+ * jednokratni sync odmah. Pri neuspjehu razlikujemo problem s korisnikovom
+ * vezom od problema s našim poslužiteljem, pa UI prikaže pravu poruku.
  */
 class RoutesViewModel(
     private val staticRepository: StaticRepository,
+    private val importer: GtfsImporter,
+    private val connectivity: ConnectivityChecker,
+    private val gtfsZipUrl: String,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RoutesUiState())
@@ -27,10 +36,33 @@ class RoutesViewModel(
         load()
     }
 
+    fun retry() = load()
+
     private fun load() {
         viewModelScope.launch {
-            val routes = staticRepository.getRoutes().sortedWith(routeOrder)
-            _uiState.value = RoutesUiState(routes = routes, isLoading = false)
+            _uiState.value = RoutesUiState(isLoading = true)
+
+            var routes = staticRepository.getRoutes()
+            var error: LoadError? = null
+
+            if (routes.isEmpty()) {
+                if (!connectivity.isOnline()) {
+                    error = LoadError.NO_INTERNET
+                } else {
+                    when (importer.sync(gtfsZipUrl)) {
+                        is GtfsImporter.Result.Imported,
+                        GtfsImporter.Result.UpToDate -> routes = staticRepository.getRoutes()
+                        is GtfsImporter.Result.Failed ->
+                            error = classifyLoadError(online = connectivity.isOnline())
+                    }
+                }
+            }
+
+            _uiState.value = RoutesUiState(
+                routes = routes.sortedWith(routeOrder),
+                isLoading = false,
+                error = error,
+            )
         }
     }
 
@@ -48,4 +80,5 @@ class RoutesViewModel(
 data class RoutesUiState(
     val routes: List<Route> = emptyList(),
     val isLoading: Boolean = true,
+    val error: LoadError? = null,
 )

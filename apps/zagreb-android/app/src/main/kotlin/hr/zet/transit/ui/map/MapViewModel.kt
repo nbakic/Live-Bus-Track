@@ -33,9 +33,10 @@ class MapViewModel(
 
     private fun observeVehicleStream() {
         viewModelScope.launch {
-            observeVehicles().collect { vehicles ->
+            observeVehicles().collect { feed ->
                 _uiState.value = _uiState.value.copy(
-                    vehicles = vehicles,
+                    vehicles = feed.data,
+                    isLive = feed.isLive,
                     isLoading = false,
                 )
             }

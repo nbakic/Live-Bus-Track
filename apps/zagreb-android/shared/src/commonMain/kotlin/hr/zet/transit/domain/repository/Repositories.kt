@@ -2,6 +2,7 @@ package hr.zet.transit.domain.repository
 
 import hr.zet.transit.domain.model.Arrival
 import hr.zet.transit.domain.model.JourneyPlan
+import hr.zet.transit.domain.model.RealtimeFeed
 import hr.zet.transit.domain.model.Route
 import hr.zet.transit.domain.model.RouteSchedule
 import hr.zet.transit.domain.model.RouteShape
@@ -53,13 +54,13 @@ interface StaticRepository {
  */
 interface RealtimeRepository {
     /** Žive pozicije vozila. Adaptivni polling iza Flowa. */
-    fun observeVehicles(): Flow<List<Vehicle>>
+    fun observeVehicles(): Flow<RealtimeFeed<Vehicle>>
 
     /** Dolasci na stajalište — RT predikcije ili statički fallback. */
-    fun observeArrivals(stopId: String): Flow<List<Arrival>>
+    fun observeArrivals(stopId: String): Flow<RealtimeFeed<Arrival>>
 
     /** Aktivni service alerts. */
-    fun observeAlerts(): Flow<List<ServiceAlert>>
+    fun observeAlerts(): Flow<RealtimeFeed<ServiceAlert>>
 }
 
 /** Omiljena stajališta — lokalno, bez backenda (A0.3 plana). */

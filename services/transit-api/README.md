@@ -6,21 +6,32 @@ izravno (sekcija 5 plana — D1).
 
 Naziv je grad-neutralan namjerno — ako se proširi na druge GTFS izvore, ostaje točan.
 
-## Što radi (Faza 0 skeleton)
+## Što radi
 
-Pass-through cache nad ZET GTFS-RT protobuf feedom:
+ZET-okrenuti sloj: dohvaća GTFS-RT protobuf i GTFS static ZIP, servira JSON.
+TTL cache (~10 s za RT, single-flight) znači da ZET vidi backend kao jednog
+potrošača neovisno o broju klijenata. `/v1` je verzionirani ugovor — breaking
+promjene idu u `/v2`, ne mijenjaju `/v1`.
 
-| Endpoint | Funkcija plana | Opis |
+| Endpoint | Funkcija | Izvor |
 |---|---|---|
-| `GET /v1/vehicles` | A0.1 | Žive pozicije vozila |
-| `GET /v1/stops/{stopId}/arrivals` | A0.2 | Predviđeni dolasci |
-| `GET /v1/alerts` | A0.4 | Service alerts |
-| `GET /health` | — | Health check za deploy |
+| `GET /health` | health check za deploy | — |
+| `GET /v1/vehicles` | žive pozicije vozila | GTFS-RT |
+| `GET /v1/stops/{id}/arrivals` | predviđeni dolasci | GTFS-RT TripUpdate |
+| `GET /v1/alerts` | prometne obavijesti | GTFS-RT Alert |
+| `GET /v1/routes` | sve linije | GTFS static |
+| `GET /v1/stops` | sva stajališta | GTFS static |
+| `GET /v1/routes/{id}/shape` | geometrija rute | `shapes.txt` |
+| `GET /v1/routes/{id}/schedule` | vozni red linije | `stop_times.txt` (streaming) |
+| `GET /v1/gtfs/static.zip` | sirovi GTFS ZIP | proxy za klijentski import |
+| `GET /v1/walk` | pješačka ruta | OSRM `foot` proxy |
+| `GET /v1/plan` | planiranje rute A→B | GraphHopper `pt` (treba ključ) |
+| `POST /v1/notifications/register` | registracija FCM tokena | — |
 
-Backend dohvaća protobuf, parsira ga i servira JSON. TTL cache (~10 s, single-flight)
-znači da ZET vidi backend kao jednog potrošača neovisno o broju klijenata.
-
-`/v1` je verzionirani ugovor — breaking promjene idu u `/v2`, ne mijenjaju `/v1`.
+RT feed se obogaćuje iz GTFS statica (`GtfsLookup`: `route_id` → ime / mode /
+headsign). **Napomena:** `stop_times.txt` (~120 MB raspakirano) se **streama** red
+po red pri gradnji voznog reda — učitavanje cijele datoteke kroz `CsvParser` je
+rušilo JVM (OOM na prvom `/v1/vehicles`). Heap je ograničen u `applicationDefaultJvmArgs`.
 
 ## Preduvjeti
 
@@ -37,9 +48,9 @@ znači da ZET vidi backend kao jednog potrošača neovisno o broju klijenata.
 Konfiguracija preko env varijabli (vidi `Config.kt`): `PORT`, `RT_CACHE_TTL`,
 `ZET_GTFS_RT_URL`, `ZET_GTFS_STATIC_URL`.
 
-## Sljedeće (Faza 0 → A0)
+## Sljedeće
 
-- GTFS static ZIP proxy + parsiranje (`/v1/routes`, `/v1/stops`).
-- Razrješenje `route_short_name`/`headsign`/`mode` iz GTFS static (sad placeholderi).
-- Kontraktni testovi `/v1` ugovora; CD pipeline na EU hosting (sekcija 14 plana).
-- A2: routing (OTP/GraphHopper) i push (FCM).
+Preostale produkcijske rupe prate se u [`docs/TODO.md`](../../docs/TODO.md) —
+ključno: hosting + CD (P5), GraphHopper API ključ (P1), self-hosted OSRM (P6),
+te 24h feed-validacija na stvarnom ZET feedu (L1). Backend je potvrđeno
+pokrenut protiv stvarnog feeda (vidi TODO §1.4).

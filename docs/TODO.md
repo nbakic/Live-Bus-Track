@@ -5,7 +5,7 @@
 > [`zagreb-app-plan.md`](zagreb-app-plan.md); ovaj dokument prati izvedbu.
 >
 > **Grana:** sav rad je na grani `zet-app`. `master` se ne dira.
-> **Datum:** 2026-05-18
+> **Datum:** 2026-05-18 (zadnje ažurirano 2026-05-29)
 
 ---
 
@@ -67,6 +67,22 @@ Verzionirani `/v1` ugovor. Klijent gađa isključivo ovaj backend, nikad ZET.
 
 Svi prolaze pod JDK 17.
 
+### 1.4 Nedavno odrađeno (2026-05-29)
+
+- **Backend OOM fix (L7):** `GtfsStaticFeedService` sad *streama* `stop_times.txt`
+  (~120 MB raspakirano) red po red umjesto da ga cijelog učita kroz `CsvParser`
+  (što je rušilo JVM na prvom `/v1/vehicles` i obaralo sve žive podatke).
+  Potvrđeno protiv stvarnog ZET feeda: ~322 vozila, 155 linija, 3839 stajališta.
+- **Redizajn karte:** plutajuća tražilica + horizontalno klizni čipovi + diskretna
+  "live" pilula umjesto skupine FAB-ova.
+- **Koherentna ZET-crvena tema (C7):** pun M3 token set, neutralne površine, dark mode.
+- **Prvi start puni bazu odmah:** `GtfsSyncWorker.syncNow` (jednokratni sync) uz
+  periodični; prije se lista linija/stajališta učitala prazno dok periodični posao
+  (24 h) ne odradi. `GtfsImporter` serijaliziran mutexom da ne dvostruko preuzima.
+- **Internet vs. poslužitelj poruke (C8):** `ConnectivityChecker` + `classifyLoadError`;
+  karta i `RoutesScreen` razlikuju "nema interneta" od "poslužitelj nedostupan", uz retry.
+- **HTTP timeout 8 s → 25 s** za spore hladne statičke dohvate.
+
 ---
 
 ## 2. Što NEDOSTAJE za produkciju
@@ -95,7 +111,9 @@ servis, credential ili konfiguraciju da bi *stvarno* radila.
 | ~~C4~~ | ~~FCM token store~~ | — | **RIJEŠENO.** Tokeni se perzistiraju u datoteku (`fcm-tokens.txt`, atomarni write) i preživljavaju restart. Pri rastu zamijeniti pravom bazom. |
 | ~~C5~~ | ~~`mode` heuristika u RT feedu~~ | — | **RIJEŠENO.** `GtfsLookup` mapira `route_id` → mode/ime/headsign iz GTFS static; RT feed se time obogaćuje. Usput popravljeni i `routeShortName`/`headsign` placeholderi u dolascima. |
 | C6 | Smjer-strelice vozila | `VehicleLayer` | Vozila su krugovi (CircleLayer). Prava ikona vozila + rotacija po bearingu traži registriranu ikonu u stilu — dolazi uz P3. |
-| C7 | Design tokeni | `ui/theme/Theme.kt` | Placeholder paleta (ZET crvena). Pravi tokeni iz Figma design procesa (sekcija 6 plana). |
+| C7 | Design tokeni | `ui/theme/Theme.kt` | **DJELOMIČNO (2026-05-29).** Gola placeholder paleta zamijenjena koherentnim M3 setom iz ZET crvene (pun token set, neutralne površine, dark mode). Finalni Figma tokeni (sekcija 6) i dalje su cilj. |
+| C8 | Internet vs. poslužitelj na svim ekranima | `ui/common/LoadError.kt`, `EmptyState.kt`, ekrani | **DJELOMIČNO (2026-05-29).** Razlikovanje "nema interneta" vs "poslužitelj nedostupan" izvedeno na karti (`LiveStatusPill`) i `RoutesScreen` (+ retry). Preostaje proširiti na Nearby/Favorites/Search/Alerts/Routines koristeći zajednički `EmptyState`/`LoadErrorState`. |
+| C9 | Vizualna verifikacija novih UI stanja | — | Error/empty stanja kompajliraju i backend testovi prolaze, ali nova stanja nisu vizualno potvrđena (emulator bez RAM-a na dev stroju). Provjeriti na stvarnom uređaju ili emulatoru s više RAM-a. |
 
 ### 2.3 Procesno / prije launcha
 
@@ -107,7 +125,7 @@ servis, credential ili konfiguraciju da bi *stvarno* radila.
 | ~~L4~~ | ~~CI/CD~~ | **RIJEŠENO.** `.github/workflows/zet-app.yml` buildaj + testira backend i Android na svaki push/PR, uploada APK i test izvještaje. Deploy korak (CD) dolazi uz P5 (hosting). |
 | L5 | Play Console | Registracija developera (€25), interni track za beta. |
 | L6 | Beta-kohorta | 5–10 dnevnih putnika za A0 testiranje (DoD, sekcija 7 plana). |
-| L7 | Realan GTFS test | Aplikacija nije pokrenuta protiv stvarnog ZET feeda — backend treba pokrenuti i provjeriti parsiranje stvarnih podataka. |
+| ~~L7~~ | ~~Realan GTFS test~~ | **DJELOMIČNO RIJEŠENO (2026-05-29).** Backend pokrenut protiv stvarnog ZET feeda, parsiranje potvrđeno (~322 vozila, 155 linija, 3839 stajališta); usput popravljen OOM (vidi 1.4). Ostaje 24h feed-stabilnost (L1). |
 
 ---
 

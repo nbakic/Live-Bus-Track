@@ -46,6 +46,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import hr.zet.transit.ui.common.LoadError
+import hr.zet.transit.ui.common.shortMessage
 import org.koin.androidx.compose.koinViewModel
 import org.maplibre.android.maps.MapLibreMap
 
@@ -118,6 +120,7 @@ fun MapScreen(
         LiveStatusPill(
             vehicleCount = state.vehicles.size,
             isLive = state.isLive,
+            error = state.liveError,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
@@ -217,6 +220,7 @@ private fun SearchBarPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 private fun LiveStatusPill(
     vehicleCount: Int,
     isLive: Boolean,
+    error: LoadError?,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -240,7 +244,11 @@ private fun LiveStatusPill(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = if (isLive) "$vehicleCount vozila uživo" else "Nema podataka uživo",
+                text = if (isLive) {
+                    "$vehicleCount vozila uživo"
+                } else {
+                    error?.shortMessage() ?: "Nema podataka uživo"
+                },
                 style = MaterialTheme.typography.labelLarge,
                 color = if (isLive) {
                     MaterialTheme.colorScheme.onSurface

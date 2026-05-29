@@ -4,7 +4,10 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -39,6 +42,29 @@ class GtfsSyncWorker(
 
     companion object {
         private const val WORK_NAME = "gtfs-static-sync"
+        private const val ONE_TIME_WORK_NAME = "gtfs-static-sync-now"
+
+        /**
+         * Jednokratni sync odmah pri startu — puni bazu na prvom pokretanju,
+         * prije nego periodični posao (24 h) uopće stigne odraditi. KEEP da se
+         * ne gomilaju duplikati; GtfsImporter ionako preskoči ako je ZIP isti.
+         */
+        fun syncNow(context: Context) {
+            val request = OneTimeWorkRequestBuilder<GtfsSyncWorker>()
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build(),
+                )
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                ONE_TIME_WORK_NAME,
+                ExistingWorkPolicy.KEEP,
+                request,
+            )
+        }
 
         /** Registrira dnevni sync — idempotentno, poziva se pri startu appa. */
         fun schedule(context: Context) {

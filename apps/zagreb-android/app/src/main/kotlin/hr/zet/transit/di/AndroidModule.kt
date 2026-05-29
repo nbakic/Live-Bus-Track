@@ -34,7 +34,13 @@ val androidModule = module {
     single { ConnectivityChecker(androidContext()) }
     single { PushTokenRegistrar(api = get()) }
 
-    viewModel { MapViewModel(observeVehicles = get(), staticRepository = get()) }
+    viewModel {
+        MapViewModel(
+            observeVehicles = get(),
+            staticRepository = get(),
+            connectivity = get(),
+        )
+    }
     viewModel {
         StopDetailViewModel(
             observeArrivals = get(),

@@ -38,7 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hr.zet.transit.domain.model.Route
 import hr.zet.transit.domain.model.TransitMode
-import hr.zet.transit.ui.common.LoadError
+import hr.zet.transit.ui.common.EmptyState
+import hr.zet.transit.ui.common.LoadErrorState
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -62,17 +63,8 @@ fun RoutesScreen(
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
 
-            state.error == LoadError.NO_INTERNET -> EmptyState(
-                icon = Icons.Filled.WifiOff,
-                title = "Nema internetske veze",
-                subtitle = "Izgleda da nisi povezan na internet. Provjeri vezu pa pokušaj ponovno.",
-                onRetry = viewModel::retry,
-            )
-
-            state.error == LoadError.SERVER -> EmptyState(
-                icon = Icons.Filled.CloudOff,
-                title = "Poslužitelj nije dostupan",
-                subtitle = "Naši poslužitelji trenutno ne odgovaraju. Pokušaj ponovno za koji trenutak.",
+            state.error != null -> LoadErrorState(
+                error = state.error!!,
                 onRetry = viewModel::retry,
             )
 
@@ -92,49 +84,6 @@ fun RoutesScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
-        }
-    }
-}
-
-/** Ujednačeno prazno/error stanje — ikona + naslov + pojašnjenje + retry. */
-@Composable
-private fun EmptyState(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    modifier: Modifier = Modifier,
-    onRetry: (() -> Unit)? = null,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(16.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        if (onRetry != null) {
-            Spacer(Modifier.height(20.dp))
-            FilledTonalButton(onClick = onRetry) { Text("Pokušaj ponovno") }
         }
     }
 }

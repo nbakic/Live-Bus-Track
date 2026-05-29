@@ -2,10 +2,13 @@ package hr.zet.transit.ui.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import hr.zet.transit.data.ConnectivityChecker
 import hr.zet.transit.domain.model.Stop
 import hr.zet.transit.domain.model.Vehicle
 import hr.zet.transit.domain.repository.StaticRepository
 import hr.zet.transit.domain.usecase.ObserveVehiclesUseCase
+import hr.zet.transit.ui.common.LoadError
+import hr.zet.transit.ui.common.classifyLoadError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +24,7 @@ import kotlinx.coroutines.launch
 class MapViewModel(
     private val observeVehicles: ObserveVehiclesUseCase,
     private val staticRepository: StaticRepository,
+    private val connectivity: ConnectivityChecker,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -37,6 +41,8 @@ class MapViewModel(
                 _uiState.value = _uiState.value.copy(
                     vehicles = feed.data,
                     isLive = feed.isLive,
+                    // Kad feed nije živ: razlikuj korisnikovu vezu od našeg poslužitelja.
+                    liveError = if (feed.isLive) null else classifyLoadError(connectivity.isOnline()),
                     isLoading = false,
                 )
             }
@@ -55,6 +61,8 @@ data class MapUiState(
     val vehicles: List<Vehicle> = emptyList(),
     val stops: List<Stop> = emptyList(),
     val isLoading: Boolean = true,
-    /** false kad RT feed nedostaje — UI prikazuje "Podaci uživo nedostupni". */
+    /** false kad RT feed nedostaje — UI prikazuje degradirano stanje. */
     val isLive: Boolean = true,
+    /** Zašto feed nije živ (nema interneta vs. poslužitelj) — null kad je živ. */
+    val liveError: LoadError? = null,
 )

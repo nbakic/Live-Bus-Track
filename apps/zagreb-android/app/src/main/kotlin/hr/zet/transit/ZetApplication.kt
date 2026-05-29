@@ -14,7 +14,9 @@ class ZetApplication : Application() {
             androidContext(this@ZetApplication)
             modules(sharedModule, androidModule)
         }
-        // Dnevni GTFS static sync (idempotentno — KEEP politika).
+        // Odmah napuni bazu na prvom pokretanju (jednokratno), pa registriraj
+        // dnevni sync za svježinu (oba idempotentna — KEEP politika).
+        GtfsSyncWorker.syncNow(this)
         GtfsSyncWorker.schedule(this)
     }
 }

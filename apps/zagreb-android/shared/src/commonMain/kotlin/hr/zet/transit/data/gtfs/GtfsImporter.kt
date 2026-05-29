@@ -6,6 +6,8 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.readBytes
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -23,6 +25,10 @@ class GtfsImporter(
     private val zipReader: GtfsZipReader = GtfsZipReader(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
+    // Serijalizira sync-eve: startni jednokratni sync i onaj koji RoutesViewModel
+    // okine kad je baza prazna ne smiju paralelno preuzimati ZIP ni pisati u bazu.
+    private val syncMutex = Mutex()
+
     /** Ishod importa — UI/WorkManager logiraju koji je slučaj nastupio. */
     sealed interface Result {
         /** ZIP nepromijenjen (SHA-256 isti) — baza ostaje kakva jest. */
@@ -38,6 +44,7 @@ class GtfsImporter(
      * @return ishod; pri grešci baza ostaje netaknuta (fallback na zadnji ZIP).
      */
     suspend fun sync(gtfsZipUrl: String): Result = withContext(ioDispatcher) {
+        syncMutex.withLock {
         runCatching {
             val zipBytes = httpClient.get(gtfsZipUrl).readBytes()
             val sha = zipReader.sha256(zipBytes)
@@ -76,5 +83,6 @@ class GtfsImporter(
             }
             Result.Imported(routeCount = routes.size, stopCount = stops.size)
         }.getOrElse { Result.Failed(it) }
+        }
     }
 }

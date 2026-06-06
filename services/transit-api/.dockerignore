@@ -1,0 +1,15 @@
+# Keep the build context small and reproducible — only sources + Gradle
+# wrapper metadata reach the daemon. Everything below is rebuilt or irrelevant.
+.gradle/
+build/
+*.log
+backend-out.log
+backend-err.log
+deploy/
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md
+.git/
+.idea/
+*.iml

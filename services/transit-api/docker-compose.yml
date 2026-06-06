@@ -1,0 +1,43 @@
+# transit-api deployment compose.
+#
+# The container binds ONLY to the loopback interface (127.0.0.1:8090) on the
+# host; nginx terminates TLS and proxy_passes to it. The app is never exposed
+# directly to the public internet.
+#
+# Deploy:  docker compose up -d --build
+# Logs:    docker compose logs -f
+# Env:     copy .env.example -> .env to override ZET URLs / GraphHopper key.
+
+services:
+  transit-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: transit-api:latest
+    container_name: transit-api
+    restart: unless-stopped
+
+    # Host loopback only. Container listens on 8080; published to 127.0.0.1:8090.
+    ports:
+      - "127.0.0.1:8090:8080"
+
+    environment:
+      PORT: "8080"
+      # ZET feed URLs default to www.zet.hr inside the app; override here only
+      # if ZET changes endpoints. GraphHopper key enables /v1/plan.
+      ZET_GTFS_RT_URL: "${ZET_GTFS_RT_URL:-https://www.zet.hr/gtfs-rt-protobuf}"
+      ZET_GTFS_STATIC_URL: "${ZET_GTFS_STATIC_URL:-https://www.zet.hr/gtfs-scheduled/latest}"
+      RT_CACHE_TTL: "${RT_CACHE_TTL:-10}"
+      GRAPHHOPPER_API_KEY: "${GRAPHHOPPER_API_KEY:-}"
+
+    # 2 vCPU / 3.7 GB host. Cap matches the -Xmx1536m heap plus JVM overhead.
+    deploy:
+      resources:
+        limits:
+          memory: 1800m
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -9,3 +9,7 @@ local.properties
 # Runtime token store (C4) — ne ide u repo
 fcm-tokens.txt
 fcm-tokens.txt.tmp
+
+# Local-run log artifacts (smoke testing)
+backend-out.log
+backend-err.log

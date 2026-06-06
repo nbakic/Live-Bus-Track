@@ -46,7 +46,50 @@ rušilo JVM (OOM na prvom `/v1/vehicles`). Heap je ograničen u `applicationDefa
 ```
 
 Konfiguracija preko env varijabli (vidi `Config.kt`): `PORT`, `RT_CACHE_TTL`,
-`ZET_GTFS_RT_URL`, `ZET_GTFS_STATIC_URL`.
+`ZET_GTFS_RT_URL`, `ZET_GTFS_STATIC_URL`, `GRAPHHOPPER_API_KEY`.
+
+## Deploy (produkcija)
+
+Backend trči u Dockeru na VPS-u i sluša **samo na loopbacku** (`127.0.0.1:8090`);
+nginx terminira TLS i `proxy_pass`-a na njega. App nikad nije izravno izložen
+internetu.
+
+```
+Internet ──TLS──▶ nginx :443 ──▶ 127.0.0.1:8090 ──▶ docker: transit-api :8080
+                  (tranzit.bus-split.com)              (-Xmx1536m, healthcheck /health)
+```
+
+Produkcijska instanca: **https://tranzit.bus-split.com** (Ubuntu 24.04 VPS,
+`/opt/transit`). Cert je Let's Encrypt preko `certbot --nginx` (auto-renew).
+
+Datoteke za deploy (ovaj direktorij):
+
+- `Dockerfile` — multi-stage build (JDK build → slim JRE runtime, non-root).
+- `docker-compose.yml` — bind na `127.0.0.1:8090`, `restart: unless-stopped`,
+  memory limit, log rotacija.
+- `.env.example` — opcionalni override-i (GraphHopper ključ, ZET URL-ovi).
+- `deploy/nginx-tranzit.conf` — nginx vhost (pre-TLS; certbot dopiše 443 blok).
+
+Prvi deploy / update:
+
+```bash
+# 1. sync izvora na server (npr. tar | ssh, ili git pull) u /opt/transit
+# 2. na serveru:
+cd /opt/transit
+cp -n .env.example .env          # po potrebi upiši GRAPHHOPPER_API_KEY
+docker compose up -d --build     # build image + (re)start container
+docker compose logs -f           # provjera
+
+# nginx vhost (jednom):
+sudo cp deploy/nginx-tranzit.conf /etc/nginx/sites-available/tranzit.bus-split.com
+sudo ln -sf /etc/nginx/sites-available/tranzit.bus-split.com /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+# TLS (jednom; certbot dalje sam obnavlja):
+sudo certbot --nginx -d tranzit.bus-split.com
+```
+
+Provjera: `curl https://tranzit.bus-split.com/health` → `{"status":"ok"}`.
 
 ## Sljedeće
 

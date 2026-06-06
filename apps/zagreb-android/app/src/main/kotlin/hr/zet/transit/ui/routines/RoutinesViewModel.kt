@@ -51,6 +51,7 @@ class RoutinesViewModel(
             arrivalJobs.remove(kind)?.cancel()
             _uiState.value = _uiState.value.copy(
                 arrivalsByKind = _uiState.value.arrivalsByKind - kind,
+                liveByKind = _uiState.value.liveByKind - kind,
             )
         }
         // Pokreni collectore za nove rutine.
@@ -60,6 +61,8 @@ class RoutinesViewModel(
                     _uiState.value = _uiState.value.copy(
                         arrivalsByKind = _uiState.value.arrivalsByKind +
                             (routine.kind to feed.data.sortedBy { it.predictedTime }.take(3)),
+                        liveByKind = _uiState.value.liveByKind +
+                            (routine.kind to feed.isLive),
                     )
                 }
             }
@@ -80,5 +83,11 @@ data class RoutinesUiState(
     val routines: List<Routine> = emptyList(),
     /** Sljedeći dolasci po vrsti rutine — najviše 3 po rutini. */
     val arrivalsByKind: Map<RoutineKind, List<Arrival>> = emptyMap(),
+    /**
+     * Je li RT feed te rutine živ. False kad backend ne odgovara — kartica tad
+     * razlikuje "nema dolazaka" od "ne mogu dohvatiti dolaske" (C8). Nedostatak
+     * ključa = još nije stigao prvi snapshot (tretiramo kao živo/učitavanje).
+     */
+    val liveByKind: Map<RoutineKind, Boolean> = emptyMap(),
     val isLoading: Boolean = true,
 )

@@ -13,18 +13,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOff
+import androidx.compose.material.icons.filled.LocationSearching
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import hr.zet.transit.ui.common.EmptyState
+import hr.zet.transit.ui.common.LoadError
+import hr.zet.transit.ui.common.LoadErrorState
+import hr.zet.transit.ui.common.LoadingState
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -59,32 +65,38 @@ fun NearbyScreen(
         )
 
         when (state.status) {
-            NearbyStatus.LOADING -> CenteredBox { CircularProgressIndicator() }
+            NearbyStatus.LOADING -> LoadingState(label = "Tražim stajališta u blizini…")
 
-            NearbyStatus.PERMISSION_DENIED -> CenteredBox {
-                Text(
-                    text = "Za prikaz najbližih stajališta potreban je pristup lokaciji.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            NearbyStatus.PERMISSION_DENIED -> EmptyState(
+                icon = Icons.Filled.LocationOff,
+                title = "Pristup lokaciji je isključen",
+                subtitle = "Za prikaz najbližih stajališta dopusti aplikaciji pristup lokaciji.",
+                onRetry = {
+                    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                },
+            )
 
-            NearbyStatus.NO_LOCATION -> CenteredBox {
-                Text(
-                    text = "Lokacija trenutno nije dostupna. Uključi GPS i pokušaj ponovno.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            NearbyStatus.NO_LOCATION -> EmptyState(
+                icon = Icons.Filled.LocationSearching,
+                title = "Lokacija nije dostupna",
+                subtitle = "Uključi GPS i provjeri da imaš signal, pa pokušaj ponovno.",
+                onRetry = viewModel::loadNearby,
+            )
+
+            // Lokalna baza prazna i ne možemo je napuniti — razlikuj korisnikovu
+            // vezu od našeg poslužitelja (C8), umjesto lažne "nema stajališta".
+            NearbyStatus.LOAD_ERROR -> LoadErrorState(
+                error = state.error ?: LoadError.SERVER,
+                onRetry = viewModel::loadNearby,
+            )
 
             NearbyStatus.READY -> {
                 if (state.stops.isEmpty()) {
-                    CenteredBox {
-                        Text(
-                            text = "U blizini nema poznatih stajališta.",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
+                    EmptyState(
+                        icon = Icons.Filled.Place,
+                        title = "Nema stajališta u blizini",
+                        subtitle = "U tvojoj blizini nema poznatih ZET stajališta.",
+                    )
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize().padding(top = 8.dp)) {
                         items(state.stops, key = { it.stop.id }) { nearby ->
@@ -121,13 +133,4 @@ private fun NearbyRow(nearby: NearbyStop, onClick: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-}
-
-@Composable
-private fun CenteredBox(content: @Composable () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-        content = { content() },
-    )
 }

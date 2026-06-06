@@ -2,7 +2,6 @@ package hr.zet.transit.ui.routines
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,12 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hr.zet.transit.domain.model.Arrival
 import hr.zet.transit.domain.model.Routine
 import hr.zet.transit.domain.model.RoutineKind
+import hr.zet.transit.ui.common.LoadingState
 import hr.zet.transit.ui.stop.formatEta
 import org.koin.androidx.compose.koinViewModel
 
@@ -55,10 +53,7 @@ fun RoutinesScreen(
         )
 
         when {
-            state.isLoading -> Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
-                contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
+            state.isLoading -> LoadingState()
 
             state.routines.isEmpty() -> Text(
                 text = "Još nemaš rutina.\n" +
@@ -72,6 +67,8 @@ fun RoutinesScreen(
                 RoutineCard(
                     routine = routine,
                     arrivals = state.arrivalsByKind[routine.kind].orEmpty(),
+                    // Bez ulaza u mapu = još čekamo prvi snapshot → tretiraj kao živ.
+                    isLive = state.liveByKind[routine.kind] ?: true,
                     onClick = { onStopClick(routine.stopId) },
                 )
             }
@@ -83,6 +80,7 @@ fun RoutinesScreen(
 private fun RoutineCard(
     routine: Routine,
     arrivals: List<Arrival>,
+    isLive: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -104,8 +102,14 @@ private fun RoutineCard(
                 style = MaterialTheme.typography.titleMedium,
             )
             if (arrivals.isEmpty()) {
+                // Razlikuj "stvarno nema dolazaka" od "backend ne odgovara" (C8) —
+                // inače bi pad poslužitelja izgledao kao mirno jutro bez polazaka.
                 Text(
-                    text = "Nema najavljenih dolazaka.",
+                    text = if (isLive) {
+                        "Nema najavljenih dolazaka."
+                    } else {
+                        "Dolasci trenutno nisu dostupni — provjeri vezu."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),

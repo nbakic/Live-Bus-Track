@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hr.zet.transit.domain.model.Arrival
 import hr.zet.transit.domain.model.RoutineKind
+import hr.zet.transit.ui.common.EmptyState
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -90,6 +92,15 @@ fun StopDetailScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
+
+            // Backend ne odgovara i nemamo ništa za prikazati — degradirano
+            // stanje, ne lažna "nema dolazaka" poruka (C8).
+            !state.isLive && state.arrivals.isEmpty() -> EmptyState(
+                icon = Icons.Filled.CloudOff,
+                title = "Dolasci nisu dostupni",
+                subtitle = "Trenutno ne možemo dohvatiti dolaske za ovo stajalište. " +
+                    "Provjeri vezu pa pokušaj ponovno.",
+            )
 
             state.arrivals.isEmpty() -> Box(
                 modifier = Modifier.fillMaxSize(),

@@ -69,6 +69,9 @@ val androidModule = module {
             getNearbyStops = get(),
             staticRepository = get(),
             locationProvider = get(),
+            importer = get(),
+            connectivity = get(),
+            gtfsZipUrl = ApiConfig.gtfsStaticZipUrl(BuildConfig.BACKEND_URL),
         )
     }
 }

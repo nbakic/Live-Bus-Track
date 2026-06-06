@@ -30,9 +30,9 @@ android {
                 "proguard-rules.pro",
             )
             // Produkcijski backend URL — override iz Gradle propertyja
-            // (-PbackendUrl=...) ili CI secreta; placeholder kao zadani.
+            // (-PbackendUrl=...) ili CI secreta; default je živi backend.
             val backendUrl = (project.findProperty("backendUrl") as String?)
-                ?: "https://api.zet-transit.example"
+                ?: "https://tranzit.bus-split.com"
             buildConfigField("String", "BACKEND_URL", "\"$backendUrl\"")
         }
     }

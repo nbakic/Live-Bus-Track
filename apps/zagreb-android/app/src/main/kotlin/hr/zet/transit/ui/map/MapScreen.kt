@@ -1,5 +1,6 @@
 package hr.zet.transit.ui.map
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -175,6 +176,14 @@ private fun TopControls(
                             modifier = Modifier.size(AssistChipDefaults.IconSize),
                         )
                     },
+                    // Čista bijela ploha + brendirana ikona + tanka kontura — čipovi
+                    // čine jednu cjelinu s plutajućom tražilicom (isti vizualni jezik).
+                    colors = AssistChipDefaults.elevatedAssistChipColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        labelColor = MaterialTheme.colorScheme.onSurface,
+                        leadingIconContentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 )
             }
         }
@@ -189,9 +198,12 @@ private fun SearchBarPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(28.dp),
+        // Čista neutralna površina (bez tonalnog crvenog tinta) + meka sjena i
+        // tanka kontura — plutajuća tražilica čitko odskače od karte u oba moda.
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp,
+        tonalElevation = 0.dp,
         shadowElevation = 6.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier
             .fillMaxWidth()
             .semantics { contentDescription = "Pretraži stanice i linije" },
@@ -226,8 +238,9 @@ private fun LiveStatusPill(
     Surface(
         shape = RoundedCornerShape(50),
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp,
+        tonalElevation = 0.dp,
         shadowElevation = 4.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier,
     ) {
         Row(

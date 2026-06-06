@@ -37,9 +37,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hr.zet.transit.domain.model.Route
-import hr.zet.transit.domain.model.TransitMode
 import hr.zet.transit.ui.common.EmptyState
 import hr.zet.transit.ui.common.LoadErrorState
+import hr.zet.transit.ui.common.LoadingState
+import hr.zet.transit.ui.common.RouteBadge
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -58,10 +59,7 @@ fun RoutesScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         when {
-            state.isLoading -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
+            state.isLoading -> LoadingState()
 
             state.error != null -> LoadErrorState(
                 error = state.error!!,
@@ -101,7 +99,7 @@ private fun RouteRow(
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RouteBadge(route)
+        RouteBadge(shortName = route.shortName, mode = route.mode, colorHex = route.color)
         Text(
             text = route.longName.ifBlank { route.shortName },
             style = MaterialTheme.typography.bodyLarge,
@@ -109,29 +107,3 @@ private fun RouteRow(
         )
     }
 }
-
-@Composable
-private fun RouteBadge(route: Route, modifier: Modifier = Modifier) {
-    val badgeColor = route.color?.let(::parseHexColor)
-        ?: if (route.mode == TransitMode.TRAM) Color(0xFF0066CC) else Color(0xFFFF8C00)
-
-    Surface(
-        color = badgeColor,
-        shape = RoundedCornerShape(6.dp),
-        modifier = modifier.size(width = 48.dp, height = 32.dp),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = route.shortName,
-                color = Color.White,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-}
-
-/** Parsira "#RRGGBB" u Compose Color; null pri neispravnom formatu. */
-private fun parseHexColor(hex: String): Color? = runCatching {
-    Color(android.graphics.Color.parseColor(hex))
-}.getOrNull()

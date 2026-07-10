@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>Borneo Trip Planner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="hero">
+    <div class="hero-content">
+      <div class="eyebrow">🌿 Sabah · Malezijski Borneo</div>
+      <h1>Borneo Trip Planner</h1>
+      <p>Jedno mjesto za itinerar, letove, hotele, budžet, izlete i sve što treba ponijeti na obiteljsko putovanje.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Ispis / PDF</button>
+        <button class="btn btn-warn" onclick="exportData()">⬇️ Izvezi plan</button>
+        <label class="btn btn-primary" style="cursor:pointer">
+          ⬆️ Uvezi plan
+          <input id="importFile" type="file" accept=".json" style="display:none">
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <a href="#pregled">Pregled</a>
+    <a href="#itinerar">Itinerar</a>
+    <a href="#lokacije">Lokacije</a>
+    <a href="#prijevoz">Letovi i hoteli</a>
+    <a href="#budzet">Budžet</a>
+    <a href="#checklista">Checklista</a>
+    <a href="#biljeske">Bilješke</a>
+  </nav>
+
+  <section id="pregled" class="section">
+    <div class="section-head">
+      <div>
+        <h2>Pregled putovanja</h2>
+        <div class="section-sub">Podaci se automatski spremaju u ovom pregledniku.</div>
+      </div>
+      <button class="btn btn-soft" onclick="resetAll()">Vrati početni plan</button>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="card stat"><div class="stat-icon">📍</div><div><strong id="statDestination">Sabah</strong><span>glavna regija</span></div></div>
+      <div class="card stat"><div class="stat-icon">🌙</div><div><strong id="statNights">7</strong><span>noćenja</span></div></div>
+      <div class="card stat"><div class="stat-icon">👨‍👩‍👧</div><div><strong id="statTravelers">3</strong><span>putnika</span></div></div>
+      <div class="card stat"><div class="stat-icon">💶</div><div><strong id="statBudget">€0</strong><span>planirani trošak</span></div></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="form-grid">
+        <div><label>Naziv putovanja</label><input id="tripName" value="Obiteljski Borneo 2026"></div>
+        <div><label>Regija / baza</label><input id="destination" value="Sabah · Kota Kinabalu"></div>
+        <div><label>Datum početka</label><input id="startDate" type="date"></div>
+        <div><label>Datum završetka</label><input id="endDate" type="date"></div>
+        <div><label>Broj putnika</label><input id="travelers" type="number" min="1" value="3"></div>
+        <div><label>Valuta</label><select id="currency"><option value="EUR">EUR</option><option value="MYR">MYR</option><option value="USD">USD</option></select></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="itinerar" class="section">
+    <div class="section-head">
+      <div><h2>Itinerar po danima</h2><div class="section-sub">Predloženi raspored možeš mijenjati, brisati i nadopunjavati.</div></div>
+      <button class="btn btn-dark" onclick="addDay()">＋ Dodaj dan</button>
+    </div>
+    <div id="daysList" class="itinerary"></div>
+  </section>
+
+  <section id="lokacije" class="section">
+    <div class="section-head"><div><h2>Ključne lokacije</h2><div class="section-sub">Najlogičnije opcije za prvi obiteljski posjet Sabahu.</div></div></div>
+    <div class="grid grid-3">
+      <article class="card destination">
+        <img src="https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1200&q=80" alt="Kota Kinabalu">
+        <div class="body"><span class="tag">Baza</span><span class="tag">Hrana</span><span class="tag">Zalazak sunca</span><h3>Kota Kinabalu</h3><p>Najpraktičnija baza za gradske sadržaje, otočne izlete i letove prema Sandakanu.</p><a class="btn btn-soft" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Kota+Kinabalu">Otvori kartu</a></div>
+      </article>
+      <article class="card destination">
+        <img src="https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?auto=format&fit=crop&w=1200&q=80" alt="Orangutan">
+        <div class="body"><span class="tag">Orangutani</span><span class="tag">Cjelodnevni izlet</span><h3>Sepilok i Sandakan</h3><p>Glavni cilj za orangutane. Najjednostavnije je ranojutarnjim letom iz Kota Kinabalua i povratkom navečer.</p><a class="btn btn-soft" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Sepilok+Orangutan+Rehabilitation+Centre">Otvori kartu</a></div>
+      </article>
+      <article class="card destination">
+        <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80" alt="Kinabalu">
+        <div class="body"><span class="tag">Priroda</span><span class="tag">Planina</span><span class="tag">Dnevni izlet</span><h3>Kinabalu Park</h3><p>Planinska klima, botanički vrtovi i odličan kontrast tropskoj obali. Za jednodnevni izlet nije potreban uspon na vrh.</p><a class="btn btn-soft" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Kinabalu+Park">Otvori kartu</a></div>
+      </article>
+      <article class="card destination">
+        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80" alt="Otočni izlet">
+        <div class="body"><span class="tag">More</span><span class="tag">Snorkeling</span><h3>Tunku Abdul Rahman Park</h3><p>Otoci Manukan, Sapi i Mamutik udaljeni su kratkom vožnjom brodom od grada.</p><a class="btn btn-soft" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Tunku+Abdul+Rahman+Marine+Park">Otvori kartu</a></div>
+      </article>
+      <article class="card destination">
+        <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80" alt="Rijeka">
+        <div class="body"><span class="tag">Divlje životinje</span><span class="tag">1–2 noći</span><h3>Kinabatangan</h3><p>Najbolja opcija za safari brodom, majmune, ptice i mogućnost opažanja slonova. Vrijedi samo ako ostajete barem jednu noć.</p><a class="btn btn-soft" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Kinabatangan+River+Sabah">Otvori kartu</a></div>
+      </article>
+      <article class="card destination">
+        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" alt="Plaža">
+        <div class="body"><span class="tag">Odmor</span><span class="tag">Plaža</span><h3>Resort dan</h3><p>Ostavite barem jedan potpuno prazan dan za bazen, plažu i fleksibilnost zbog tropskog vremena.</p><a class="btn btn-soft" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Kota+Kinabalu+beach+resort">Otvori kartu</a></div>
+      </article>
+    </div>
+  </section>
+
+  <section id="prijevoz" class="section">
+    <div class="section-head">
+      <div><h2>Letovi i hoteli</h2><div class="section-sub">Brojevi rezervacija i vremena polazaka na jednom mjestu.</div></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-head"><div><h3 style="margin:0">✈️ Letovi</h3></div><button class="btn btn-soft" onclick="addFlight()">＋ Dodaj</button></div>
+        <div id="flightsList"></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div><h3 style="margin:0">🏨 Hoteli</h3></div><button class="btn btn-soft" onclick="addHotel()">＋ Dodaj</button></div>
+        <div id="hotelsList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="budzet" class="section">
+    <div class="section-head">
+      <div><h2>Budžet</h2><div class="section-sub">Unesi procjene ili stvarne troškove.</div></div>
+      <button class="btn btn-dark" onclick="addExpense()">＋ Dodaj trošak</button>
+    </div>
+    <div class="grid grid-2">
+      <div class="card"><div id="expensesList"></div></div>
+      <div class="card">
+        <div class="total-box">
+          <span>Ukupno planirano</span>
+          <strong id="budgetTotal">€0</strong>
+          <div id="budgetPerPerson">€0 po osobi</div>
+          <div class="progress"><span id="budgetProgress"></span></div>
+        </div>
+        <div style="margin-top:14px"><label>Ciljani maksimalni budžet</label><input id="budgetLimit" type="number" min="0" value="6000"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="checklista" class="section">
+    <div class="section-head">
+      <div><h2>Checklista</h2><div class="section-sub">Dokumenti, zdravlje, tehnika i odjeća.</div></div>
+      <button class="btn btn-dark" onclick="addChecklistItem()">＋ Dodaj stavku</button>
+    </div>
+    <div id="checklist" class="checklist"></div>
+  </section>
+
+  <section id="biljeske" class="section">
+    <div class="section-head"><div><h2>Važne bilješke</h2><div class="section-sub">Sve ono što ne smije ostati samo u porukama i mailovima.</div></div></div>
+    <div class="grid grid-2">
+      <div class="card"><label>Opće bilješke</label><textarea id="notes" placeholder="Restorani, transferi, kontakti, posebne želje..."></textarea></div>
+      <div class="note">
+        <strong>Praktična logika plana</strong>
+        <p style="margin-bottom:0">Za 7 noći najugodnija je jedna baza u Kota Kinabaluu, jedan avionski izlet u Sepilok i najviše još jedan veći kopneni izlet. Kinabatangan je bolji kao zaseban boravak od 1–2 noći nego kao naporan jednodnevni izlet.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Planer je lokalna web aplikacija. Svi uneseni podaci ostaju spremljeni u pregledniku uređaja.</footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
